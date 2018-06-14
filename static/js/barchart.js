@@ -1,5 +1,5 @@
 //Width and height
-var margin = {top: 20, right: 20, bottom: 50, left: 60};
+var margin = {top: 20, right: 80, bottom: 50, left: 60};
 var w = 580 - margin.left - margin.right;
 var h = 480 - margin.top - margin.bottom;
 
@@ -28,6 +28,9 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
 
     // Store unaltered data here to deal with updated user dropdown selections
     var master_data = data;
+
+    // Data to manipulate
+    var chart_data = data;
 
     // Dropdown menus
     var yearDropdown = d3.select("#yearDropdown");
@@ -81,14 +84,14 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     var province = $("#provinceDropdownSelector option:selected").text();
     var nutrient = $("#nutrientDropdownSelector option:selected").text();
 
-    data = master_data[year][province][nutrient];
+    chart_data = master_data[year][province][nutrient];
 
     // Nest again, this time returning entries instead of an object using 'age'
-    data = d3.nest()
+    chart_data = d3.nest()
         .key(function (d) {
             return d.age
         })
-        .entries(data);
+        .entries(chart_data);
 
     // Unique age categories
     var age_categories = ['1-3', '4-8', '9-13', '14-18', '19-30', '31-50', '51-70',
@@ -113,10 +116,10 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
 
     // Iterate through data structure to find max y-value (mean)
     var meanValues = [];
-    Object.keys(data).forEach(
+    Object.keys(chart_data).forEach(
         function (key) {
-            for (var i = 0; i < data[key].values.length; i++) {
-                meanValues.push(data[key].values[i].mean)
+            for (var i = 0; i < chart_data[key].values.length; i++) {
+                meanValues.push(chart_data[key].values[i].mean)
             }
         }
     );
@@ -169,7 +172,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
 
     // Binding the data to agegroups
     var agegroups = svg.selectAll(".agegroups")
-        .data(data)
+        .data(chart_data)
         .enter()
         .append("g")
         .attr("class", "g")
@@ -178,7 +181,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
         });
 
     // Drawing the chart
-    draw_rects();
+    update_data();
 
     // X Axis placement and text
     svg.append("g")
@@ -218,15 +221,15 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
         .style("opacity", "0");
 
     legend.append("rect")
-        .attr("x", w - 18)
-        .attr("width", 18)
-        .attr("height", 18)
+        .attr("x", h + 85)
+        .attr("width", 15)
+        .attr("height", 15)
         .style("fill", function (d) {
             return color_range(d);
         });
 
     legend.append("text")
-        .attr("x", w - 40)
+        .attr("x", w + 50)
         .attr("y", 9)
         .attr("dy", ".35em")
         .style("text-anchor", "end")
@@ -247,34 +250,29 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
 
     // Data update change
     function update_data() {
-
         // Grab selected option from dropdown for each filter category
         year = $("#yearDropdownSelector option:selected").text();
         province = $("#provinceDropdownSelector option:selected").text();
         nutrient = $("#nutrientDropdownSelector option:selected").text();
 
         // Filter new dataset
-        data = master_data[year][province][nutrient];
-        data = d3.nest()
+        chart_data = master_data[year][province][nutrient];
+        chart_data = d3.nest()
             .key(function (d) {
                 return d.age
             })
-            .entries(data);
-
-        console.log(data);
+            .entries(chart_data);
 
         // Retrieve a new maximum y-value
         meanValues = [];
-        Object.keys(data).forEach(
+        Object.keys(chart_data).forEach(
             function (key) {
-                for (var i = 0; i < data[key].values.length; i++) {
-                    meanValues.push(data[key].values[i].mean)
+                for (var i = 0; i < chart_data[key].values.length; i++) {
+                    meanValues.push(chart_data[key].values[i].mean)
                 }
             }
         );
         maxValueY = d3.max(meanValues);
-        console.log(meanValues);
-        console.log(maxValueY);
 
         // Set new domain and range with the updated max y-value
         // yScale.domain([0, maxValueY]).range([h, 0]);
@@ -306,6 +304,14 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     }
 
     function draw_rects() {
+        agegroups.data(chart_data)
+            .enter()
+            .append("g")
+            .attr("class", "g")
+            .attr("transform", function (d) {
+                return "translate(" + xScale0(d.key) + ",0)";
+            });
+
         agegroups.selectAll("rect")
             .data(function (d) {
                 return d.values;
@@ -318,12 +324,6 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             })
             .style("fill", function (d) {
                 return color_range(d.sex)
-            })
-            .attr("y", function () {
-                return yScale(0)
-            })
-            .attr("height", function () {
-                return h - yScale(0);
             })
             .on("mouseover", function (d) {
                 d3.select(this).style("fill", d3.rgb(color_range(d.sex)).darker(1));
