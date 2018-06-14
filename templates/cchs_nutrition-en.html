@@ -142,14 +142,19 @@
 
     <div class="row">
 
-        <div id="barchart" class="col-lg-8 col-md-7 col-sm-12" style="overflow:visible"></div>
+        <div id="barchart" class="col-lg-7 col-md-8 col-sm-12" style="overflow:visible"></div>
 
-        <div class="col-lg-4 col-md-5 col-sm-12" style="overflow:visible;">
-            <div class="badge"> {# TODO: Figure out a nice container for these selectors #}
-                <div id="yearDropdown" class="chart-selector"></div>
-                <div id="provinceDropdown" class="chart-selector"></div>
-                <div id="nutrientDropdown" class="chart-selector"></div>
-            </div>
+        <div class="col-lg-4 col-md-4 col-sm-12" style="overflow:visible;">
+            <fieldset>
+                <div class="form-group-sm">
+                    <label for="yearDropdown">Year</label>
+                    <div id="yearDropdown" class="chart-selector"></div>
+                    <label for="provinceDropdown">Region</label>
+                    <div id="provinceDropdown" class="chart-selector"></div>
+                    <label for="nutrientDropdown">Nutrient</label>
+                    <div id="nutrientDropdown" class="chart-selector"></div>
+                </div>
+            </fieldset>
         </div>
 
     </div>
