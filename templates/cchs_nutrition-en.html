@@ -142,19 +142,29 @@
 
     <div class="row">
 
+        {# Main bar chart is populated here #}
         <div id="barchart" class="col-lg-7 col-md-8 col-sm-12" style="overflow:visible"></div>
 
+        {# Options and metadata for chart #}
         <div class="col-lg-4 col-md-4 col-sm-12" style="overflow:visible;">
-            <fieldset>
-                <div class="form-group-sm">
-                    <label for="yearDropdown">Year</label>
-                    <div id="yearDropdown" class="chart-selector"></div>
-                    <label for="provinceDropdown">Region</label>
-                    <div id="provinceDropdown" class="chart-selector"></div>
-                    <label for="nutrientDropdown">Nutrient</label>
-                    <div id="nutrientDropdown" class="chart-selector"></div>
-                </div>
-            </fieldset>
+
+            <div class="container-fluid">
+                <h2 class="mrgn-tp-0">Chart Data</h2>
+                {# Dropdown menus for filtering chart data #}
+                <fieldset>
+                    <div class="form-group-sm">
+                        <label for="yearDropdown">Year</label>
+                        <div id="yearDropdown" class="chart-selector"></div>
+                        <label for="provinceDropdown">Region</label>
+                        <div id="provinceDropdown" class="chart-selector"></div>
+                        <label for="nutrientDropdown">Nutrient</label>
+                        <div id="nutrientDropdown" class="chart-selector"></div>
+                    </div>
+                </fieldset>
+
+                {# Text for tooltip goes here #}
+                <section id="tooltip-box" class="lnkbx well"></section>
+            </div>
         </div>
 
     </div>
@@ -165,7 +175,7 @@
             <dl id="wb-dtmd">
                 <dt>Date modified:&#32;</dt>
                 <dd>
-                    <time property="dateModified">2017-09-29</time>
+                    <time property="dateModified">2018-06-15</time>
                 </dd>
             </dl>
         </div>

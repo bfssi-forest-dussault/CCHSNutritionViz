@@ -326,10 +326,23 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                 return color_range(d.sex)
             })
             .on("mouseover", function (d) {
+                // Darker shade for bar
                 d3.select(this).style("fill", d3.rgb(color_range(d.sex)).darker(1));
+
+                // Update tooltip box
+                d3.select("#tooltip-box")
+                    .html(
+                        "<strong>Mean: </strong>" + d.mean +
+                        "<br><strong>Sex: </strong>" + d.sex +
+                        "<br><strong>Age group: </strong>" + d.age
+                    )
             })
             .on("mouseout", function (d) {
+                // Restore original color
                 d3.select(this).style("fill", color_range(d.sex));
+
+                // Cleanup tooltip
+                d3.select("#tooltip").remove()
             });
 
         agegroups.selectAll("rect")
@@ -354,7 +367,8 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             })
             .attr("height", function (d) {
                 return h - yScale(d.mean);
-            });
+            })
+
     }
 
 });

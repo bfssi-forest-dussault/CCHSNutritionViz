@@ -18,13 +18,13 @@ g.tick line {
 
 /*Chart grid formatting*/
 .grid line {
-  stroke: lightgrey;
-  stroke-opacity: 0.7;
-  shape-rendering: crispEdges;
+    stroke: lightgrey;
+    stroke-opacity: 0.7;
+    shape-rendering: crispEdges;
 }
 
 .grid path {
-  stroke-width: 0;
+    stroke-width: 0;
 }
 
 /*Tooltip formatting*/
@@ -46,10 +46,21 @@ g.tick line {
     -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
     -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
     box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
-
 }
 
 /* Select element styling */
 .chart-selector {
     padding: 0.5em;
+}
+
+#tooltip-box {
+    /*background: #fff;*/
+    /*border-radius: 2px;*/
+    display: inline-block;
+    height: 7em;
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.5em;
+    margin-top: 0.5em;
+    /*box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);*/
 }
