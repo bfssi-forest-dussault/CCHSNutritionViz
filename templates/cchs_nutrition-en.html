@@ -138,20 +138,19 @@
 <main role="main" property="mainContentOfPage" class="container">
 
     <h1 property="name" id="wb-cont">CCHS Nutrition Data</h1>
-    <p><strong>From <a href="#">[Health Canada]</a></strong></p>
+    <p><strong>From <a href="#">Health Canada</a></strong></p>
 
     <div class="row">
-
-        {# Main bar chart is populated here #}
-        <div id="barchart" class="col-lg-7 col-md-8 col-sm-12" style="overflow:visible"></div>
-
         {# Options and metadata for chart #}
-        <div class="col-lg-4 col-md-4 col-sm-12" style="overflow:visible;">
+        <div class="col-lg-5 col-md-5 col-sm-12" style="overflow:visible;">
 
             <div class="container-fluid">
-                <h2 class="mrgn-tp-0">Chart Data</h2>
+                <h2 class="mrgn-tp-0">Nutrition Data Visualisation</h2>
                 {# Dropdown menus for filtering chart data #}
                 <fieldset>
+                    <h3 class="h6 mrgn-tp-0 mrgn-rght-0 mrgn-bttm-sm">
+                        <span id="ContentPlaceHolder_Body_LabelStep1" class="text-danger">Select item(s) from each list below:</span>
+                    </h3>
                     <div class="form-group-sm">
                         <label for="yearDropdown">Year</label>
                         <div id="yearDropdown" class="chart-selector"></div>
@@ -162,13 +161,36 @@
                     </div>
                 </fieldset>
 
+                {# Info window #}
+                <div style="width:100%;margin-top:15px" class="alert alert-info">
+                    <p>
+            <span id="ContentPlaceHolder_Body_LabelHIHomeLink1"><a href="https://infobase.phac-aspc.gc.ca/something/">
+                Click here for more information is available about the nutrition data.</a></span>
+                        Hover over any bar in the chart with your mouse cursor to see detailed data.</p>
+                </div>
+
                 {# Text for tooltip goes here #}
                 <section id="tooltip-box" class="lnkbx well"></section>
             </div>
+
+
         </div>
+
+        {# Main bar chart is populated here #}
+        <div id="barchart" class="col-lg-6 col-md-6 col-sm-12 brdr-lft" style="overflow:visible" align="center"></div>
 
     </div>
 
+    {# Download buttons #}
+    <div class="row" align="center">
+        <br>
+        <button class="btn btn-primary" disabled><span class="glyphicon glyphicon-cloud-download"></span> Chart (.png)
+        </button>
+        <button role="button" class="btn btn-success"
+                onclick="location.href='/static/data/NutritionByRegion_Master.csv'">
+            <span class="glyphicon glyphicon-cloud-download"></span> Full Dataset (.csv)
+        </button>
+    </div>
 
     <div class="row">
         <div class="pagedetails">
