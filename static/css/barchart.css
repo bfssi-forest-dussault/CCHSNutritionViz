@@ -13,7 +13,15 @@
 
 g.tick line {
     color: black;
+}
 
+g.tick text {
+    font-size: 10pt;
+}
+
+g.legend rect {
+    stroke: #5e5e5e;
+    stroke-width: 1px;
 }
 
 /*Chart grid formatting*/
@@ -27,40 +35,17 @@ g.tick line {
     stroke-width: 0;
 }
 
-/*Tooltip formatting*/
-.tooltip {
-    position: absolute;
-    text-align: left;
-    width: auto;
-    height: auto;
-    padding: 8px;
-    margin-top: -20px;
-    font: 12px sans-serif;
-    background: white;
-    pointer-events: none;
-    opacity: 1;
-    border: 1px solid black;
-    -webkit-border-radius: 10px;
-    -moz-border-radius: 10px;
-    border-radius: 10px;
-    -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
-    -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
-    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
-}
-
-/* Select element styling */
+/* Select option styling */
 .chart-selector {
-    padding: 0.5em;
+    padding-bottom: 0.5em;
 }
 
+/* Tooltip formatting */
 #tooltip-box {
-    /*background: #fff;*/
-    /*border-radius: 2px;*/
     display: inline-block;
     height: 7em;
     position: relative;
     width: 100%;
     margin-bottom: 0.5em;
     margin-top: 0.5em;
-    /*box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);*/
 }
