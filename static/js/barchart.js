@@ -29,9 +29,6 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     // Store unaltered data here to deal with updated user dropdown selections
     var master_data = data;
 
-    // Data to manipulate
-    var chart_data = data;
-
     // Dropdown menus
     var yearDropdown = d3.select("#yearDropdown");
     var provinceDropdown = d3.select("#provinceDropdown");
@@ -46,6 +43,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     yearDropdown.append("select")
         .attr("class", "select form-control")
         .attr("id", "yearDropdownSelector")
+        .style("width", "100%")
         .on("change", update_data)
         .selectAll("option")
         .data(yearList)
@@ -58,6 +56,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     provinceDropdown.append("select")
         .attr("class", "select form-control")
         .attr("id", "provinceDropdownSelector")
+        .style("width", "100%")
         .on("change", update_data)
         .selectAll("option")
         .data(provinceList)
@@ -70,6 +69,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     nutrientDropdown.append("select")
         .attr("class", "select form-control")
         .attr("id", "nutrientDropdownSelector")
+        .style("width", "100%")
         .on("change", update_data)
         .selectAll("option")
         .data(nutrientList)
@@ -83,27 +83,25 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     var year = $("#yearDropdownSelector option:selected").text();
     var province = $("#provinceDropdownSelector option:selected").text();
     var nutrient = $("#nutrientDropdownSelector option:selected").text();
-
-    chart_data = master_data[year][province][nutrient];
+    data = master_data[year][province][nutrient];
 
     // Nest again, this time returning entries instead of an object using 'age'
-    chart_data = d3.nest()
+    data = d3.nest()
         .key(function (d) {
             return d.age
         })
-        .entries(chart_data);
+        .entries(data);
 
-    // Unique age categories
+    // Categories for chart labelling
     var age_categories = ['1-3', '4-8', '9-13', '14-18', '19-30', '31-50', '51-70',
         '19 years and over', '71 years and over'];
-
     var sex_categories = ['Male', 'Female', 'Both'];
 
     // Colors for bars
     var color_range = d3.scaleOrdinal()
         .range(["#727272", "#ca0020", "#0571b0"]);
 
-    // Scale setup
+    // xScale setup
     var xScale0 = d3.scaleBand()
         .domain(age_categories)  // categories go here (domain of values tageo use for xAxis)
         .rangeRound([0, w])  // pixel range for categories
@@ -114,23 +112,23 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
         .domain(sex_categories)
         .rangeRound([0, xScale0.bandwidth()]);
 
-    // Iterate through data structure to find max y-value (mean)
+    // Iterate through data to find max y-value (mean)
     var meanValues = [];
-    Object.keys(chart_data).forEach(
+    Object.keys(data).forEach(
         function (key) {
-            for (var i = 0; i < chart_data[key].values.length; i++) {
-                meanValues.push(chart_data[key].values[i].mean)
+            for (var i = 0; i < data[key].values.length; i++) {
+                meanValues.push(data[key].values[i].mean)
             }
         }
     );
     var maxValueY = d3.max(meanValues);
 
-    // Setup yScale with previously calculated max y-value (mean)
+    // yScale with previously calculated max y-value (mean)
     var yScale = d3.scaleLinear()
         .domain([0, maxValueY])
         .range([h, 0]);
 
-    // Axes setup
+    // xAxis setup
     var xAxis = d3.axisBottom()
         .scale(xScale0)
         .tickFormat(function (d) {  // To make the text fit more comfortably, do a text replacement
@@ -144,6 +142,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             }
         });
 
+    // yAxis setup
     var yAxis = d3.axisLeft()
         .scale(yScale)
         .ticks(5)
@@ -159,9 +158,6 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
         .attr("transform",
             "translate(" + margin.left + "," + margin.top + ")");
 
-    // Tooltip setup
-    // TODO: Figure out the best way to do this. I think SVG elements will be easier to position with d3.event.X/Y
-
     // Gridlines setup
     svg.append("g")
         .attr("class", "grid")
@@ -172,7 +168,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
 
     // Binding the data to agegroups
     var agegroups = svg.selectAll(".agegroups")
-        .data(chart_data)
+        .data(data)
         .enter()
         .append("g")
         .attr("class", "g")
@@ -183,7 +179,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     // Drawing the chart
     update_data();
 
-    // X Axis placement and text
+    // X Axis placement and text label
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + h + ")")
@@ -192,11 +188,11 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     svg.append("text")
         .attr("transform",
             "translate(" + (w / 2) + " ," +
-            (h + margin.top + 20) + ")")
+            (h + margin.top + 25) + ")")
         .style("text-anchor", "middle")
         .text("Age group (years)");
 
-    // Y Axis placement and text
+    // Y Axis placement and text label
     svg.append("g")
         .attr("class", "y axis")
         .call(yAxis);
@@ -245,7 +241,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     // Gridline functions
     function make_y_gridlines() {
         return d3.axisLeft(yScale)
-            .ticks(4)
+            .ticks(5)
     }
 
     // Data update change
@@ -255,27 +251,26 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
         province = $("#provinceDropdownSelector option:selected").text();
         nutrient = $("#nutrientDropdownSelector option:selected").text();
 
-        // Filter new dataset
-        chart_data = master_data[year][province][nutrient];
-        chart_data = d3.nest()
+        // Filter dataset
+        data = master_data[year][province][nutrient];
+        data = d3.nest()
             .key(function (d) {
                 return d.age
             })
-            .entries(chart_data);
+            .entries(data);
 
         // Retrieve a new maximum y-value
         meanValues = [];
-        Object.keys(chart_data).forEach(
+        Object.keys(data).forEach(
             function (key) {
-                for (var i = 0; i < chart_data[key].values.length; i++) {
-                    meanValues.push(chart_data[key].values[i].mean)
+                for (var i = 0; i < data[key].values.length; i++) {
+                    meanValues.push(data[key].values[i].mean)
                 }
             }
         );
         maxValueY = d3.max(meanValues);
 
         // Set new domain and range with the updated max y-value
-        // yScale.domain([0, maxValueY]).range([h, 0]);
         yScale = d3.scaleLinear()
             .domain([0, maxValueY])
             .range([h, 0]);
@@ -285,10 +280,8 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             .ticks(5)
             .tickSizeOuter(2);
 
-        console.log(yScale);
-
         // Reset the axis
-        svg.select(".y.axis").transition().duration(750).call(yAxis);
+        svg.select(".y.axis").transition().duration(600).call(yAxis);
 
         // Update the y-axis text label
         svg.select("#y-axis-text")
@@ -300,11 +293,12 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             .style("text-anchor", "middle")
             .text("Mean " + nutrient);
 
+        // Draw on the svg
         draw_rects();
     }
 
     function draw_rects() {
-        agegroups.data(chart_data)
+        agegroups.data(data)
             .enter()
             .append("g")
             .attr("class", "g")
@@ -332,7 +326,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                 // Update tooltip box
                 d3.select("#tooltip-box")
                     .html(
-                        "<strong>Mean: </strong>" + d.mean +
+                        "<strong>Mean: </strong>" + d.mean + " (±" + d.mean_se + ")" +
                         "<br><strong>Sex: </strong>" + d.sex +
                         "<br><strong>Age group: </strong>" + d.age
                     )
@@ -340,9 +334,6 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             .on("mouseout", function (d) {
                 // Restore original color
                 d3.select(this).style("fill", color_range(d.sex));
-
-                // Cleanup tooltip
-                d3.select("#tooltip").remove()
             });
 
         agegroups.selectAll("rect")
@@ -350,7 +341,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                 return d.values;
             })
             .transition()
-            .duration(500)
+            .duration(400)
             .attr("y", function () {
                 return yScale(0)
             })
@@ -359,9 +350,9 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             })
             .transition()
             .delay(function () {
-                return Math.random() * 1000;
+                return Math.random() * 500;
             })
-            .duration(600)
+            .duration(500)
             .attr("y", function (d) {
                 return yScale(d.mean);
             })
