@@ -10,7 +10,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
         sex: d['Sex'],
         mean: +d['Mean'],
         mean_se: +d['SE_Mean'],
-        province: d['Reg_Prov'],
+        region: d['Reg_Prov'],
         age: d['Age (years)']
     };
 }).then(function (data) {
@@ -19,7 +19,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             return d.year
         })
         .key(function (d) {
-            return d.province
+            return d.region
         })
         .key(function (d) {
             return d.nutrient
@@ -81,9 +81,9 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
 
     // Filter the data according to dropdown menu selections
     var year = $("#yearDropdownSelector option:selected").text();
-    var province = $("#provinceDropdownSelector option:selected").text();
+    var region = $("#provinceDropdownSelector option:selected").text();
     var nutrient = $("#nutrientDropdownSelector option:selected").text();
-    data = master_data[year][province][nutrient];
+    data = master_data[year][region][nutrient];
 
     // Nest again, this time returning entries instead of an object using 'age'
     data = d3.nest()
@@ -248,11 +248,11 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     function update_data() {
         // Grab selected option from dropdown for each filter category
         year = $("#yearDropdownSelector option:selected").text();
-        province = $("#provinceDropdownSelector option:selected").text();
+        region = $("#provinceDropdownSelector option:selected").text();
         nutrient = $("#nutrientDropdownSelector option:selected").text();
 
         // Filter dataset
-        data = master_data[year][province][nutrient];
+        data = master_data[year][region][nutrient];
         data = d3.nest()
             .key(function (d) {
                 return d.age
