@@ -2,30 +2,32 @@
 SHAPEFILE
 1. Retrieved Cartographic Boundary File from here:
 https://www12.statcan.gc.ca/census-recensement/2011/geo/bound-limit/bound-limit-2011-eng.cfm
-2. Dropped contents into www.mapshaper.com and exported GeoJSON
-
-
-
+2. Dropped contents into www.mapshaper.com and exported to GeoJSON
+3. D3.js magiks
 */
 
 //Width and height
-var margin = {top: 40, right: 40, bottom: 0, left: 40};
+var margin = {top: 0, right: 40, bottom: 0, left: 40};
 var w = 580 - margin.left - margin.right;
 var h = 580 - margin.top - margin.bottom;
 
 var svgContainer = d3.select("#geochart");
 var svg = svgContainer
     .append("svg")
+    .style("display", "block")
     .attr("width", w + margin.left + margin.right)
     .attr("height", h + margin.top + margin.bottom)
     .append("g")
     .attr("transform",
         "translate(" + margin.left + "," + margin.top + ")");
 
+// Global variable to track which region is currently being hovered over by user
+var hovered_region = null;
+
 d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     return {
         nutrient: d['Nutrient/Item (unit)'],
-        year: +d['Year'],
+        year: d['Year'],
         sex: d['Sex'],
         mean: +d['Mean'],
         mean_se: +d['SE_Mean'],
@@ -48,7 +50,20 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
         })
         .object(data);
 
-    console.log(master_data);
+    var line_data = d3.nest()
+        .key(function (d) {
+            return d.sex
+        })
+        .key(function (d) {
+            return d.age
+        })
+        .key(function (d) {
+            return d.nutrient
+        })
+        .key(function (d) {
+            return d.region
+        })
+        .object(data);
 
     // Dropdown menus
     var yearDropdown = d3.select("#yearDropdown");
@@ -58,13 +73,20 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
 
     // Grab values from the main data object to populate options from the select dropdown
     var yearList = ['2004', '2015'];
-    // var sexList = ['Both', 'Female', 'Male'];
     var sexList = ['Female', 'Male'];
-    // var ageList = ['1-3', '4-8', '9-13', '14-18', '19-30', '31-50', '51-70', '19 years and over', '71 years and over'];
     var ageList = ['9-13', '14-18', '19-30', '31-50', '51-70', '19 years and over', '71 years and over'];
     var nutrientList = Object.keys(master_data['2015']['Male']['14-18']);
 
+    /*
+    Note that the 'Both' sex category is not included in this visualization. Accordingly, this means that age groups
+    1-3 and 4-8 are not available. This is because the complete nutrient set is not available for this group.
+
+    var sexList = ['Both', 'Female', 'Male'];
+    var ageList = ['1-3', '4-8', '9-13', '14-18', '19-30', '31-50', '51-70', '19 years and over', '71 years and over'];
+     */
+
     d3.json("/static/data/gpr_000b11a_e.json").then(function (json) {
+
             // Setup dropdown menus
             yearDropdown.append("select")
                 .attr("class", "select form-control")
@@ -125,10 +147,10 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             var nutrient = $("#nutrientDropdownSelector option:selected").text();
             data = master_data[year][sex][age][nutrient];
 
-            // Modified a color scale from https://bl.ocks.org/mbostock/5577023
+            // Modified color scale from https://bl.ocks.org/mbostock/5577023
             var color = d3.scaleQuantize()
-                .range(["#f7f4f9", "#e7e1ef", "#d4b9da", "#c994c7", "#df65b0", "#e7298a", "#ce1256", "#980043", "#67001f"]);
-            // .range(["#d0d1e6", "#a6bddb", "#74a9cf", "#3690c0", "#0570b0", "#045a8d", "#023858", "#022643"]);
+                .range(["#f7f4f9", "#e7e1ef", "#d4b9da", "#c994c7", "#df65b0",
+                    "#e7298a", "#ce1256", "#980043", "#67001f"]);
 
             color.domain([
                 d3.min(data, function (d) {
@@ -162,7 +184,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             var projection = d3.geoAzimuthalEqualArea()
                 .rotate([100, -45])
                 .center([5, 20])
-                .scale([650])
+                .scale([680])
                 .translate([w / 2, h / 2]);
 
             var path = d3.geoPath().projection(projection);
@@ -171,8 +193,9 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             var svgContainer = d3.select("#geolegend");
             var key = svgContainer
                 .append("svg")
+                .style("display", "block")
                 .attr("width", (w / 1.5) + 40)
-                .attr("height", (h / 12) + 20)
+                .attr("height", (h / 12) + 40)
                 .append("g")
                 .attr("transform",
                     "translate(" + 10 + "," + 10 + ")");
@@ -195,7 +218,9 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                 var age = $("#ageDropdownSelector option:selected").text();
                 var nutrient = $("#nutrientDropdownSelector option:selected").text();
                 data = master_data[year][sex][age][nutrient];
-                console.log(data);
+
+                // Cleanup the linechart
+                d3.select("#linechart").remove();
 
                 // Reset color scale
                 color.domain([
@@ -209,6 +234,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
 
                 // Merge new data with geoJSON
                 for (var i = 0; i < data.length; i++) {
+
                     // Grab region name
                     var dataRegion = data[i].region;
 
@@ -236,59 +262,6 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                     }
                 }
 
-                // Texture for hovering
-                var texture = textures.lines().size(8).strokeWidth(2).background("white");
-                svg.call(texture);
-
-                // Cleanup
-                svg.selectAll(".regions").remove();
-
-                svg.append("g").attr("class", "regions")
-                    .selectAll("path")
-                    .data(json.features)
-                    .enter()
-                    .append("path")
-                    .attr("d", path)
-                    .attr("class", "region-borders")
-                    .style('pointer-events', 'all')  // enable mouseover and mouseout
-                    .style("fill", function (d) {
-                        if (d.properties.mean) {
-                            return color(d.properties.mean);
-                        }
-                        else {
-                            return "#ccc";
-                        }
-                    })
-                    .on("mouseover", function (d) {
-                        // Darker shade for bar
-                        // d3.select(this).style("fill", d3.rgb(color(d.properties.mean)).darker(2));
-                        d3.select(this).style("fill", texture.url());
-
-                        // Update tooltip box
-                        d3.select("#tooltip-box")
-                            .html(
-                                function () {
-                                    if (typeof d.properties.mean === "undefined") {
-                                        return "<strong>Mean: </strong>N/A" + "<br><strong>Region: </strong>"
-                                            + d.properties.PRENAME
-                                    }
-                                    else {
-                                        return "<strong>Mean: </strong>" + d.properties.mean + " (±" + d.properties.mean_se + ")" +
-                                            "<br><strong>Region: </strong>" + d.properties.region
-                                    }
-                                }
-                            )
-                    })
-                    .on("mouseout", function (d) {
-                        // Restore original colors
-                        if (typeof d.properties.mean === "undefined") {
-                            d3.select(this).style("fill", "#ccc");
-                        }
-                        else {
-                            d3.select(this).style("fill", color(d.properties.mean));
-                        }
-                    });
-
                 // Iterate through data to find min/max mean values for dataset
                 var meanValues = [];
                 Object.keys(data).forEach(
@@ -301,9 +274,112 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                 var maxValueY = d3.max(meanValues);
                 var minValueY = d3.min(meanValues);
 
-                //Update legend (Source: https://bl.ocks.org/duspviz-mit/9b6dce37101c30ab80d0bf378fe5e583)
+                // Texture settings for hovering over regions with textures.js
+                var texture = textures.lines().size(8).strokeWidth(2).background("white");
+                svg.call(texture);
 
-                key.select("rect").remove();
+                // Cleanup
+                svg.selectAll(".regions").remove();
+
+                // Draw map
+                svg.append("g").attr("class", "regions")
+                    .selectAll("path")
+                    .data(json.features)
+                    .enter()
+                    .append("path")
+                    .attr("d", path)
+                    .attr("class", "region-borders")
+                    .style('pointer-events', 'all')  // required to enable mouseover and mouseout on svg
+                    .style("fill", function (d) {
+                        if (d.properties.mean) {
+                            return color(d.properties.mean);
+                        }
+                        else {
+                            return "#ccc";
+                        }
+                    })
+                    .on("mouseover", function (d) {
+                        // Apply texture to region
+                        d3.select(this).style("fill", texture.url());
+
+                        // Grab the region and store it the global variable
+                        hovered_region = d.properties.region;
+
+                        // Update tooltip box + append new linechart
+                        d3.select("#tooltip-text")
+                            .html(
+                                function () {
+                                    if (typeof d.properties.mean === "undefined") {
+                                        return "<strong>Mean: </strong>N/A" + "<br><strong>Region: </strong>" +
+                                            d.properties.PRENAME + "<br>"
+                                    }
+                                    else {
+                                        return "<strong>Mean: </strong>" + d.properties.mean +
+                                            " (±" + d.properties.mean_se + ")" +
+                                            "<br><strong>Region: </strong>" + hovered_region + "<br>"
+                                    }
+                                }
+                            );
+
+                        // Delete old linechart
+                        d3.select("#linechart").remove();
+
+                        // Create new linechart
+                        d3.select("#tooltip-chart")
+                            .append("svg")
+                            .attr("id", "linechart");
+
+                        // Update line chart
+                        // Remove any remnants of the line chart if the user hovers over a territory
+                        if (d.properties.PRENAME === "Nunavut" ||
+                            d.properties.PRENAME === "Yukon" ||
+                            d.properties.PRENAME === "Northwest Territories") {
+                            d3.select("#linechart").remove();
+                            d3.select("#legend-tick").remove();  // Remove legend tick
+
+                        }
+                        else {
+                            line_chart(d.properties.PRENAME, maxValueY, d.properties.nutrient);
+                            draw_legend(minValueY, maxValueY, nutrient, d.properties.mean);
+                        }
+                    })
+                    .on("mouseout", function (d) {
+                        // Set territories by default to original grey
+                        if (typeof d.properties.mean === "undefined") {
+                            d3.select(this).style("fill", "#ccc");
+                        }
+                        // Restore original colors to regions
+                        else {
+                            d3.select(this).style("fill", color(d.properties.mean));
+                        }
+                    });
+
+                // Draw the legend - pass null into hovered mean
+                draw_legend(minValueY, maxValueY, nutrient, null);
+
+                // Try to update line chart if the user changes an item in the dropdown
+                // This will fail by default on the first attempt since nothing is being hovered over
+                try {
+                    if (hovered_region === "Nunavut" ||
+                        hovered_region === "Yukon" ||
+                        hovered_region === "Northwest Territories") {
+                        d3.select("#linechart").remove();  // Remove linechart for territories
+                    }
+                    else {
+                        line_chart(hovered_region, maxValueY, nutrient);
+                    }
+                }
+                catch (err) {
+                    d3.select("#tooltip-text")
+                        .html("<i>Hover over a region with your cursor to see additional data.</i>")
+                }
+            }
+
+
+            function draw_legend(minValueY, maxValueY, selected_nutrient, hovered_mean) {
+                //Update legend (Derived from https://bl.ocks.org/duspviz-mit/9b6dce37101c30ab80d0bf378fe5e583)
+                key.selectAll("rect").remove();
+                key.select("#legend-label").remove();
 
                 legend.append("stop")
                     .attr("offset", "0%")
@@ -319,25 +395,133 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                     .attr("stop-opacity", 1);
                 key.append("rect")
                     .attr("width", (w / 1.5))
-                    .attr("height", (h / 12) - 25)
+                    .attr("height", (h / 12) - 28)
                     .style("fill", "url(#gradient)")
                     .attr("transform", "translate(0,10)");
 
-                var y = d3.scaleLinear()
+                var x = d3.scaleLinear()
                     .domain([maxValueY, minValueY])
                     .range([w / 1.5, 0]);
-                var yAxis = d3.axisBottom()
-                    .scale(y)
-                    .ticks(6);
+                var xAxis = d3.axisBottom()
+                    .scale(x)
+                    .ticks(4);
 
-                key.select(".y.axis").remove();
+                key.select(".x.axis").remove();
 
                 key.append("g")
-                    .attr("class", "y axis")
+                    .attr("class", "x axis")
                     .attr("transform", "translate(0,30)")
-                    .transition()
-                    .call(yAxis)
+                    .call(xAxis);
 
+                key.append("text")
+                    .attr("id", "legend-label")
+                    .attr("transform",
+                        "translate(" + (w / 3) + " ," +
+                        (h / 12 + 25) + ")")
+                    .style("text-anchor", "middle")
+                    .text(function () {
+                        var shortened_label = selected_nutrient.replace("Percentage", "%");
+                        return "Mean " + shortened_label
+                    });
+
+                // Draw a tick on the legend with hovered_mean
+                if (hovered_mean === null) {
+                }
+                else {
+                    key.append("rect")
+                        .attr("id", "legend-tick")
+                        .attr("x", x(hovered_mean))
+                        .attr("y", 0)
+                        .attr("width", 2)
+                        .attr("height", 20)
+                }
+            }
+
+            function line_chart(hovered_region, maxValueY, selected_nutrient) {
+                // Setup
+                margin = {top: 20, right: 20, bottom: 20, left: 45};
+                var line_w = ($("#tooltip-chart").parent().width()) - margin.left - margin.right;
+                var line_h = 120 - margin.top - margin.bottom;
+
+                var filtered_line_data = line_data[sex][age][selected_nutrient][hovered_region];
+                // console.log(filtered_line_data);
+
+                // Chart
+                var linechart = d3.select("#linechart")
+                    .attr("width", line_w + margin.left + margin.right)
+                    .attr("height", line_h + margin.top + margin.bottom)
+                    .style("display", "block")
+                    .style("margin", "auto");
+                var g = linechart.append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                // xScale
+                var xScale = d3.scaleBand()
+                    .domain(["2004", "2015"])
+                    .rangeRound([0, line_w])
+                    .padding(1);
+
+                // yScale
+                var yScale = d3.scaleLinear()
+                    .domain([0, maxValueY])
+                    .range([line_h, 0]);
+
+                // xAxis
+                var xAxis = d3.axisBottom().scale(xScale);
+
+                // yAxis
+                var yAxis = d3.axisLeft().scale(yScale).ticks(3);
+
+                // Line setup
+                var valueline = d3.line()
+                    .x(function (d) {
+                        return xScale(d.year);
+                    })
+                    .y(function (d) {
+                        return yScale(d.mean);
+                    });
+
+                // Reset the axis
+                linechart.select("y axis").transition().duration(300).call(yAxis);
+
+                // Update the y-axis text label
+                g.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + (line_h) + ")")
+                    .call(xAxis);
+
+                g.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis)
+                    .append("text")
+                    .attr("id", "y-axis-text")
+                    .attr("fill", "#000")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 6)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .text("Mean");
+
+                // Draw the line
+                g.append("path")
+                    .datum(filtered_line_data)
+                    .transition()
+                    .attr("class", "line")
+                    .attr("d", valueline);
+
+                // Add some caps to the ends of the line
+                g.selectAll("circle")
+                    .data(filtered_line_data)
+                    .enter()
+                    .append("circle")
+                    .attr("class", "circle")
+                    .attr("cx", function (d) {
+                        return xScale(d.year);
+                    })
+                    .attr("cy", function (d) {
+                        return yScale(d.mean);
+                    })
+                    .attr("r", 5);
             }
 
 

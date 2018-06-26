@@ -170,20 +170,21 @@
                 <div style="width:100%;margin-top:15px" class="alert alert-info">
                     <p>
             <span id="ContentPlaceHolder_Body_LabelHIHomeLink1"><a href="https://infobase.phac-aspc.gc.ca/something/">
-                Click here for more information is available about the nutrition data.</a></span>
-                        Hover over any region on the map with your mouse cursor to see detailed data.</p>
+                Click here for more information is available about the nutrition data.</a></span></p>
                 </div>
 
                 {# Text for tooltip goes here #}
-                <section id="tooltip-box" class="lnkbx well"></section>
-
+                <section class="lnkbx well" style="display: block; overflow: auto; height: auto;">
+                    <div id="tooltip-text"></div>
+                    <div id="tooltip-chart"></div>
+                </section>
             </div>
 
 
         </div>
 
         {# Main bar chart is populated here #}
-        <div class="col-lg-7 col-md-7 col-sm-12 brdr-lft" style="overflow:visible">
+        <div class="col-lg-7 col-md-7 col-sm-12" style="overflow:visible">
             <div id="geochart" align="center"></div>
             <div id="geolegend" style="overflow:visible" align="center"></div>
         </div>
@@ -253,8 +254,9 @@
     </div>
 </footer>
 <!--[if gte IE 9 | !IE ]><!-->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.js"></script>
+{#<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.js"></script>#}
 <script src="/static/wet-boew/js/wet-boew.min.js"></script>
+<script src="/static/wet-boew/js/jquery/2.1.4/jquery.js"></script>
 
 {# d3 #}
 <script src="/static/js/d3.v5.min.js"></script>
