@@ -10,3 +10,32 @@
 g.tick {
     font-size: 10pt;
 }
+
+/*Line chart elements*/
+.line {
+    fill: none;
+    stroke: #ce1256;
+    stroke-width: 3px;
+}
+
+.circle {
+  fill: #980043;
+}
+
+/*Legend formatting*/
+#legend-label {
+    font-size: 10.5pt;
+}
+
+
+.axis {
+    fill: black;
+    font: 11px sans-serif;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    shape-rendering: crispEdges;
+    stroke-width: 1px;
+}
