@@ -148,9 +148,12 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             data = master_data[year][sex][age][nutrient];
 
             // Modified color scale from https://bl.ocks.org/mbostock/5577023
-            var color = d3.scaleQuantize()
-                .range(["#f7f4f9", "#e7e1ef", "#d4b9da", "#c994c7", "#df65b0",
-                    "#e7298a", "#ce1256", "#980043", "#67001f"]);
+            // scaleLinear interpolates between values, so I think it's a better choice for this viz than scaleQuantize
+            // var color = d3.scaleQuantize()
+            //     .range(["#f7f4f9", "#e7e1ef", "#d4b9da", "#c994c7", "#df65b0",
+            //         "#e7298a", "#ce1256", "#980043", "#67001f"]);
+            var color = d3.scaleLinear()
+                .range(["#f7f4f9", "#ce1256"]);
 
             color.domain([
                 d3.min(data, function (d) {
@@ -380,6 +383,10 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                 //Update legend (Derived from https://bl.ocks.org/duspviz-mit/9b6dce37101c30ab80d0bf378fe5e583)
                 key.selectAll("rect").remove();
                 key.select("#legend-label").remove();
+
+                // Adjust min and max values slightly so the legend looks nicer
+                maxValueY = maxValueY * 1.03;
+                minValueY = minValueY * 0.97;
 
                 legend.append("stop")
                     .attr("offset", "0%")
