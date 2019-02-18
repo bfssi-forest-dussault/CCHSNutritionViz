@@ -24,7 +24,7 @@ var svg = svgContainer
 // Global variable to track which region is currently being hovered over by user
 var hovered_region = null;
 
-d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
+d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
     return {
         nutrient: d['Nutrient/Item (unit)'],
         year: d['Year'],
@@ -32,7 +32,12 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
         mean: +d['Mean'],
         mean_se: +d['SE_Mean'],
         region: d['Reg_Prov'],
-        age: d['Age (years)']
+        age: d['Age (years)'],
+        median: +d['P50'],
+        q1: +d['P25'],
+        q1_se: +d['P25_SE'],
+        q3: +d['P75'],
+        q3_se: +d['P75_SE']
     };
 }).then(function (data) {
     var master_data = d3.nest()
@@ -50,7 +55,8 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
         })
         .object(data);
 
-    var line_data = d3.nest()
+    // Initialize data to pass to the boxplot
+    var boxplot_data = d3.nest()
         .key(function (d) {
             return d.sex
         })
@@ -64,6 +70,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             return d.region
         })
         .object(data);
+    var boxplot_data_subset = null;
 
     // Dropdown menus
     var yearDropdown = d3.select("#yearDropdown");
@@ -75,7 +82,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     var yearList = ['2004', '2015'];
     var sexList = ['Female', 'Male'];
     var ageList = ['9-13', '14-18', '19-30', '31-50', '51-70', '19 years and over', '71 years and over'];
-    var nutrientList = Object.keys(master_data['2015']['Male']['14-18']);
+    var nutrientList = Object.keys(master_data['2015']['Male']['14-18']);  // Verify this category has all nutrients
 
     /*
     Note that the 'Both' sex category is not included in this visualization. Accordingly, this means that age groups
@@ -85,6 +92,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     var ageList = ['1-3', '4-8', '9-13', '14-18', '19-30', '31-50', '51-70', '19 years and over', '71 years and over'];
      */
 
+    // Read in the map data
     d3.json("/static/data/gpr_000b11a_e.json").then(function (json) {
 
             // Setup dropdown menus
@@ -133,7 +141,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                 .style("width", "100%")
                 .on("change", update_data)
                 .selectAll("option")
-                .data(nutrientList)
+                .data(nutrientList.sort())
                 .enter()
                 .append("option")
                 .text(function (d) {
@@ -222,8 +230,9 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                 var nutrient = $("#nutrientDropdownSelector option:selected").text();
                 data = master_data[year][sex][age][nutrient];
 
-                // Cleanup the linechart
-                d3.select("#linechart").remove();
+                // Cleanup the boxplot
+                d3.select("#boxplot").remove();
+                // d3.select("#linechart").remove();
 
                 // Reset color scale
                 color.domain([
@@ -296,8 +305,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                     .style("fill", function (d) {
                         if (d.properties.mean) {
                             return color(d.properties.mean);
-                        }
-                        else {
+                        } else {
                             return "#ccc";
                         }
                     })
@@ -308,15 +316,17 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                         // Grab the region and store it the global variable
                         hovered_region = d.properties.region;
 
-                        // Update tooltip box + append new linechart
+                        // Grab the relevant data for the boxplot (array with 2004, 2015 data objects)
+                        boxplot_data_subset = boxplot_data[sex][age][nutrient][hovered_region];
+
+                        // Update tooltip box + append new boxplot
                         d3.select("#tooltip-text")
                             .html(
                                 function () {
                                     if (typeof d.properties.mean === "undefined") {
                                         return "<strong>Mean: </strong>N/A" + "<br><strong>Region: </strong>" +
                                             d.properties.PRENAME + "<br>"
-                                    }
-                                    else {
+                                    } else {
                                         return "<strong>Mean: </strong>" + d.properties.mean +
                                             " (±" + d.properties.mean_se + ")" +
                                             "<br><strong>Region: </strong>" + hovered_region + "<br>"
@@ -324,25 +334,35 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                                 }
                             );
 
-                        // Delete old linechart
-                        d3.select("#linechart").remove();
+                        // // Delete old linechart
+                        // d3.select("#linechart").remove();
+                        //
+                        // // Create new linechart
+                        // d3.select("#tooltip-chart")
+                        //     .append("svg")
+                        //     .attr("id", "linechart");
 
-                        // Create new linechart
+                        // Delete old boxplot
+                        d3.select("#boxplot").remove();
+
+                        // Create new boxplot
                         d3.select("#tooltip-chart")
                             .append("svg")
-                            .attr("id", "linechart");
+                            .attr("id", "boxplot");
 
                         // Update line chart
                         // Remove any remnants of the line chart if the user hovers over a territory
                         if (d.properties.PRENAME === "Nunavut" ||
                             d.properties.PRENAME === "Yukon" ||
                             d.properties.PRENAME === "Northwest Territories") {
-                            d3.select("#linechart").remove();
+                            // d3.select("#linechart").remove();
+                            d3.select("#boxplot").remove();
                             d3.select("#legend-tick").remove();  // Remove legend tick
 
-                        }
-                        else {
-                            line_chart(d.properties.PRENAME, maxValueY, d.properties.nutrient);
+                        } else {
+                            // line_chart(d.properties.PRENAME, maxValueY, d.properties.nutrient);
+                            // box_plot(d.properties.PRENAME, d.properties.nutrient);
+                            draw_boxplot();
                             draw_legend(minValueY, maxValueY, nutrient, d.properties.mean);
                         }
                     })
@@ -360,19 +380,20 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                 // Draw the legend - pass null into hovered mean
                 draw_legend(minValueY, maxValueY, nutrient, null);
 
-                // Try to update line chart if the user changes an item in the dropdown
+                // Update boxplot if the user changes an item in the dropdown
                 // This will fail by default on the first attempt since nothing is being hovered over
                 try {
                     if (hovered_region === "Nunavut" ||
                         hovered_region === "Yukon" ||
                         hovered_region === "Northwest Territories") {
-                        d3.select("#linechart").remove();  // Remove linechart for territories
+                        // d3.select("#linechart").remove();  // Remove linechart for territories
+                        d3.select("#boxplot").remove();  // Remove boxplot for territories
+                    } else {
+                        // line_chart(hovered_region, maxValueY, nutrient);
+                        boxplot_data_subset = boxplot_data[sex][age][nutrient][hovered_region];
+                        draw_boxplot();
                     }
-                    else {
-                        line_chart(hovered_region, maxValueY, nutrient);
-                    }
-                }
-                catch (err) {
+                } catch (err) {
                     d3.select("#tooltip-text")
                         .html("<i>Hover over a region with your cursor to see additional data.</i>")
                 }
@@ -433,8 +454,7 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
 
                 // Draw a tick on the legend with hovered_mean
                 if (hovered_mean === null) {
-                }
-                else {
+                } else {
                     key.append("rect")
                         .attr("id", "legend-tick")
                         .attr("x", x(hovered_mean))
@@ -442,6 +462,130 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
                         .attr("width", 2)
                         .attr("height", 20)
                 }
+            }
+
+            function draw_boxplot() {
+                margin = {top: 20, right: 20, bottom: 20, left: 45};
+                var line_w = ($("#tooltip-chart").parent().width()) - margin.left - margin.right;
+                var line_h = 120 - margin.top - margin.bottom;
+                var barWidth = 30;
+
+                console.log(boxplot_data_subset);
+
+                // Grab min and max values
+                var minmax_vals = [
+                    ((parseFloat(boxplot_data_subset[0].q1) || 0) + (parseFloat(boxplot_data_subset[0].q1_se) || 0)),
+                    ((parseFloat(boxplot_data_subset[1].q1) || 0) + (parseFloat(boxplot_data_subset[1].q1_se) || 0)),
+                    ((parseFloat(boxplot_data_subset[0].q3) || 0) + (parseFloat(boxplot_data_subset[0].q3_se) || 0)),
+                    ((parseFloat(boxplot_data_subset[1].q3) || 0) + (parseFloat(boxplot_data_subset[1].q3_se) || 0))
+                ];
+                var maxValueY = d3.max(minmax_vals);
+
+                // Chart
+                var boxplot = d3.select("#boxplot")
+                    .attr("width", line_w + margin.left + margin.right)
+                    .attr("height", line_h + margin.top + margin.bottom)
+                    .style("display", "block")
+                    .style("margin", "auto");
+
+                var g = boxplot.append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                // xScale
+                var xScale = d3.scaleBand()
+                    .domain(["2004", "2015"])
+                    .rangeRound([0, line_w])
+                    .padding(1);
+
+                // yScale
+                var yScale = d3.scaleLinear()
+                    .domain([0, maxValueY])
+                    .range([line_h, 0]);
+
+                // xAxis
+                var xAxis = d3.axisBottom().scale(xScale);
+
+                // yAxis
+                var yAxis = d3.axisLeft().scale(yScale).ticks(3);
+
+                // Reset the axis
+                boxplot.select("y axis").transition().duration(300).call(yAxis);
+
+                // Append x-axis
+                g.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + (line_h) + ")")
+                    .call(xAxis);
+
+                // Append y-axis
+                g.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis)
+                    .append("text")
+                    .attr("id", "y-axis-text")
+                    .attr("fill", "#000")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 6)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .text("Nutrient");
+
+                // Draw the boxes of the box plot, filled and on top of vertical lines
+                var rects = g.selectAll("rect")
+                    .data(boxplot_data_subset)
+                    .enter()
+                    .append("rect")
+                    .attr("width", barWidth)
+                    .attr("height", function (data) {
+                        return yScale(data.q1) - yScale(data.q3);
+                    })
+                    .attr("x", function (data) {
+                        return xScale(data.year) - (barWidth / 2);
+                    })
+                    .attr("y", function (data) {
+                        return yScale(data.q3);
+                    })
+                    .attr("fill", "lightgrey")
+                    .attr("stroke", "#000")
+                    .attr("stroke-width", 1);
+
+                // Draw horizontal lines (median and SE)
+                var horizontalLineConfigs = [
+                    // Median line
+                    {
+                        x1: function (data) {
+                            return xScale(data.year) - barWidth / 2
+                        },
+                        y1: function (data) {
+                            return yScale(data.median)
+                        },
+                        x2: function (data) {
+                            return xScale(data.year) + barWidth / 2
+                        },
+                        y2: function (data) {
+                            return yScale(data.median)
+                        }
+                    }
+                ];
+
+                for (var i = 0; i < horizontalLineConfigs.length; i++) {
+                    var lineConfig = horizontalLineConfigs[i];
+
+                    // Draw the whiskers at the min for this series
+                    var horizontalLine = g.selectAll(".whiskers")
+                        .data(boxplot_data_subset)
+                        .enter()
+                        .append("line")
+                        .attr("x1", lineConfig.x1)
+                        .attr("y1", lineConfig.y1)
+                        .attr("x2", lineConfig.x2)
+                        .attr("y2", lineConfig.y2)
+                        .attr("stroke", "#000")
+                        .attr("stroke-width", 1)
+                        .attr("fill", "none");
+                }
+
+
             }
 
             function line_chart(hovered_region, maxValueY, selected_nutrient) {
