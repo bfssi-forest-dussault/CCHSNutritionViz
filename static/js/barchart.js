@@ -3,7 +3,7 @@ var margin = {top: 20, right: 80, bottom: 50, left: 60};
 var w = 580 - margin.left - margin.right;
 var h = 480 - margin.top - margin.bottom;
 
-d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
+d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
     return {
         nutrient: d['Nutrient/Item (unit)'],
         year: +d['Year'],
@@ -35,9 +35,27 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
     var nutrientDropdown = d3.select("#nutrientDropdown");
 
     // Grab values from the main data object to populate options from the select dropdown
-    var yearList = Object.keys(data);
-    var provinceList = Object.keys(data['2015']);
-    var nutrientList = Object.keys(data['2015']['Alberta']);
+    // var yearList = Object.keys(data);
+    // var provinceList = Object.keys(data['2015']);
+    // var nutrientList = Object.keys(data['2015']['Alberta']);
+
+    var yearList = ['2004', '2015'];
+    var provinceList = [
+        'Canada excluding territories',
+        'Newfoundland and Labrador',
+        'Prince Edward Island',
+        'Nova Scotia',
+        'New Brunswick',
+        'Quebec',
+        'Ontario',
+        'Manitoba',
+        'Alberta',
+        'Saskatchewan',
+        'British Columbia',
+        'Atlantic Region',
+        'Prairie Region'
+    ].sort();
+    var nutrientList = Object.keys(data['2015']['Alberta']).sort();
 
     // Setup dropdown menus
     yearDropdown.append("select")
@@ -319,6 +337,8 @@ d3.csv("/static/data/NutritionByRegion_Master.csv", function (d) {
             .style("fill", function (d) {
                 return color_range(d.sex)
             })
+            .style("stroke", "white")  // Not sure if I like how this looks (outline around bars)
+            .style("stroke-width", "1")
             .on("mouseover", function (d) {
                 // Darker shade for bar
                 d3.select(this).style("fill", d3.rgb(color_range(d.sex)).darker(1));
