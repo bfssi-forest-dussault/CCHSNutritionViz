@@ -12,6 +12,8 @@ var w = 580 - margin.left - margin.right;
 var h = 580 - margin.top - margin.bottom;
 
 var svgContainer = d3.select("#geochart");
+var boxplotTooltip = d3.select("body").append("div").attr("class", "boxplot-tooltip").style("display", "none");
+;
 var svg = svgContainer
     .append("svg")
     .style("display", "block")
@@ -82,7 +84,49 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
     var yearList = ['2004', '2015'];
     var sexList = ['Female', 'Male'];
     var ageList = ['9-13', '14-18', '19-30', '31-50', '51-70', '19 years and over', '71 years and over'];
-    var nutrientList = Object.keys(master_data['2015']['Male']['14-18']);  // Verify this category has all nutrients
+    // var nutrientList = Object.keys(master_data['2015']['Male']['14-18']);  // Verify this category has all nutrients
+    var nutrientList = [
+        'Magnesium (mg/d)',
+        'Linolenic fatty acid (g/d)',
+        'Folate (DFE/d)',
+        'Riboflavin (mg/d)',
+        'Vitamin C (mg/d)',
+        'Niacin (NE/d)',
+        'Caffeine (mg/d)',
+        'Total monounsaturated fats (g/d)',
+        'Potassium (mg/d)',
+        'Calcium (mg/d)',
+        'Percentage of total energy intake from fat',
+        'Percentage of total energy intake from monounsaturated fats',
+        'Percentage of total energy intake from sugars',
+        'Total energy intake (kcal/d)',
+        'Phosphorus (mg/d)',
+        'Percentage of total energy intake from carbohydrates',
+        'Percentage of total energy intake from linolenic fatty',
+        'Moisture (g/d)',
+        'Vitamin A (RAE/d)',
+        'Vitamin B6 (mg/d)',
+        'Linoleic fatty acid (g/d)',
+        'Sodium (mg/d)',
+        'Total polyunsaturated fats (g/d)',
+        'Protein (g/d)',
+        'Naturally occurring folate (mcg/d)',
+        'Iron(mg/d)',
+        'Total saturated fats (g/d)',
+        'Sugar (g/d)',
+        'Vitamin D (mcg/d)',
+        'Total fats (g/d)',
+        'Thiamin (mg/d)',
+        'Percentage of total energy intake from linoleic fatty',
+        'Cholesterol (mg/d)',
+        'Folacin (mcg/d)',
+        'Percentage of total energy intake from polyunsaturated fats',
+        'Vitamin B12 (mcg/d)',
+        'Total carbohydrates (g/d)',
+        'Percentage of total energy intake from saturated fats',
+        'Zinc (mg/d)',
+        'Total dietary fibre (g/d)'
+    ].sort();
 
     /*
     Note that the 'Both' sex category is not included in this visualization. Accordingly, this means that age groups
@@ -147,6 +191,7 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
                 .text(function (d) {
                     return d
                 });
+
 
             // Filter the data according to dropdown menu selections
             var year = $("#yearDropdownSelector option:selected").text();
@@ -470,14 +515,21 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
                 var line_h = 120 - margin.top - margin.bottom;
                 var barWidth = 30;
 
+                for (var i = 0; i < boxplot_data_subset.length; i++) {
+                    boxplot_data_subset[i].q1 = parseFloat(boxplot_data_subset[i].q1) || 0;
+                    boxplot_data_subset[i].q1_se = parseFloat(boxplot_data_subset[i].q1_se) || 0;
+                    boxplot_data_subset[i].q3 = parseFloat(boxplot_data_subset[i].q3) || 0;
+                    boxplot_data_subset[i].q3_se = parseFloat(boxplot_data_subset[i].q3_se) || 0;
+                }
+
                 console.log(boxplot_data_subset);
 
                 // Grab min and max values
                 var minmax_vals = [
-                    ((parseFloat(boxplot_data_subset[0].q1) || 0) + (parseFloat(boxplot_data_subset[0].q1_se) || 0)),
-                    ((parseFloat(boxplot_data_subset[1].q1) || 0) + (parseFloat(boxplot_data_subset[1].q1_se) || 0)),
-                    ((parseFloat(boxplot_data_subset[0].q3) || 0) + (parseFloat(boxplot_data_subset[0].q3_se) || 0)),
-                    ((parseFloat(boxplot_data_subset[1].q3) || 0) + (parseFloat(boxplot_data_subset[1].q3_se) || 0))
+                    (boxplot_data_subset[0].q1 + boxplot_data_subset[0].q1_se),
+                    (boxplot_data_subset[1].q1 + boxplot_data_subset[1].q1_se),
+                    (boxplot_data_subset[0].q3 + boxplot_data_subset[0].q3_se),
+                    (boxplot_data_subset[1].q3 + boxplot_data_subset[1].q3_se)
                 ];
                 var maxValueY = d3.max(minmax_vals);
 
@@ -530,11 +582,48 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
                     .attr("text-anchor", "end")
                     .text("Nutrient");
 
-                // Draw the boxes of the box plot, filled and on top of vertical lines
+                // Draw the box plot vertical lines
+                var verticalLines = g.selectAll(".verticalLines")
+                    .data(boxplot_data_subset)
+                    .enter()
+                    .append("line")
+                    .attr("x1", function (data) {
+                        return xScale(data.year);
+                    })
+                    .attr("y1", function (data) {
+                        return yScale(data.q1 - data.q1_se);
+                    })
+                    .attr("x2", function (data) {
+                        return xScale(data.year);
+                    })
+                    .attr("y2", function (data) {
+                        return yScale(data.q3 + data.q3_se);
+                    })
+                    .attr("stroke", "#000")
+                    .attr("stroke-width", 1)
+                    .attr("fill", "none");
+
+                // Draw the boxes, filled and on top of vertical lines
                 var rects = g.selectAll("rect")
                     .data(boxplot_data_subset)
                     .enter()
                     .append("rect")
+                    .on("mouseover", function (data) {
+                        d3.select(this).attr("fill", "white");
+                    })
+                    .on("mousemove", function (data) {
+                        boxplotTooltip.html("<br><strong>Q3: </strong>" + data.q3 + " (±" + data.q3_se + ")" +
+                            "<br><strong>Q1: </strong>" + data.q1 + " (±" + data.q1_se + ")" +
+                            "<br><strong>Median: </strong>" + data.median)
+                            .style("left", (d3.event.pageX + 20) + "px")
+                            .style("top", (d3.event.pageY) - 10 + "px")
+                            .style("display", "inline");
+                    })
+                    .on("mouseout", function (data) {
+                        d3.select(this).attr("fill", "lightgrey");
+                        boxplotTooltip.style("display", "none");
+                    })
+
                     .attr("width", barWidth)
                     .attr("height", function (data) {
                         return yScale(data.q1) - yScale(data.q3);
@@ -565,6 +654,36 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
                         y2: function (data) {
                             return yScale(data.median)
                         }
+                    },
+                    // Top line (Q3 SE)
+                    {
+                        x1: function (data) {
+                            return xScale(data.year) - barWidth / 2
+                        },
+                        y1: function (data) {
+                            return yScale(data.q3 + data.q3_se)
+                        },
+                        x2: function (data) {
+                            return xScale(data.year) + barWidth / 2
+                        },
+                        y2: function (data) {
+                            return yScale(data.q3 + data.q3_se)
+                        }
+                    },
+                    // Bottom line
+                    {
+                        x1: function (data) {
+                            return xScale(data.year) - barWidth / 2
+                        },
+                        y1: function (data) {
+                            return yScale(data.q1 - data.q1_se)
+                        },
+                        x2: function (data) {
+                            return xScale(data.year) + barWidth / 2
+                        },
+                        y2: function (data) {
+                            return yScale(data.q1 - data.q1_se)
+                        }
                     }
                 ];
 
@@ -584,8 +703,6 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
                         .attr("stroke-width", 1)
                         .attr("fill", "none");
                 }
-
-
             }
 
             function line_chart(hovered_region, maxValueY, selected_nutrient) {
