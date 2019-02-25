@@ -19,7 +19,7 @@ g.tick {
 }
 
 .circle {
-  fill: #980043;
+    fill: #980043;
 }
 
 /*Legend formatting*/
@@ -38,4 +38,17 @@ g.tick {
     fill: none;
     shape-rendering: crispEdges;
     stroke-width: 1px;
+}
+
+.boxplot-tooltip {
+    position: absolute;
+    text-align: left;
+    width: 100px;
+    height: 55px;
+    padding: 1px 1px 1px 10px;
+    font: 10px sans-serif;
+    background: #f8f8f8;
+    pointer-events: none;
+    border-style: solid;
+    border-width: thin;
 }
