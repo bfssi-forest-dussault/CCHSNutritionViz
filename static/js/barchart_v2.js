@@ -57,7 +57,7 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
         'Riboflavin (mg/d)',
         'Vitamin C (mg/d)',
         'Niacin (NE/d)',
-        'Caffeine (mg/d)',
+        // 'Caffeine (mg/d)',  // This dataset is problematic and breaks the bar chart
         'Total monounsaturated fats (g/d)',
         'Potassium (mg/d)',
         'Calcium (mg/d)',
@@ -167,12 +167,12 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
         .domain(sex_categories)
         .rangeRound([0, xScale0.bandwidth()]);
 
-    // Iterate through data to find max y-value (mean)
+    // Iterate through data to find max y-value (mean + mean_se)
     var meanValues = [];
     Object.keys(data).forEach(
         function (key) {
             for (var i = 0; i < data[key].values.length; i++) {
-                meanValues.push(data[key].values[i].mean)
+                meanValues.push(data[key].values[i].mean + data[key].values[i].mean_se)
             }
         }
     );
@@ -313,14 +313,14 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
             })
             .entries(data);
 
-        console.log(data);
+        // console.log(data);
 
         // Retrieve a new maximum y-value
         meanValues = [];
         Object.keys(data).forEach(
             function (key) {
                 for (var i = 0; i < data[key].values.length; i++) {
-                    meanValues.push(data[key].values[i].mean)
+                    meanValues.push(data[key].values[i].mean + data[key].values[i].mean_se)
                 }
             }
         );
@@ -381,6 +381,7 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
     }
 
     function draw_rects() {
+        // enter data
         agegroups.data(data)
             .enter()
             .append("g")
@@ -389,6 +390,25 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
                 return "translate(" + xScale0(d.key) + ",0)";
             });
 
+        // Draw error lines
+        agegroups.selectAll("line")
+            .data(function (d) {
+                return d.values;
+            })
+            .attr("x1", function (d) {
+                return xScale1(d.sex) + 7.5
+            })
+            .attr("y1", function (d) {
+                return yScale(d.mean + d.mean_se)
+            })
+            .attr("x2", function (d) {
+                return xScale1(d.sex) + 7.5
+            })
+            .attr("y2", function (d) {
+                return yScale(d.mean - d.mean_se)
+            });
+
+        // Draw rects
         agegroups.selectAll("rect")
             .data(function (d) {
                 return d.values;
@@ -425,26 +445,51 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
                 return d.values;
             })
             // Set to zero
-            .transition()
-            .duration(400)
+            // .transition()
+            // .duration(400)
             .attr("y", function () {
                 return yScale(0)
             })
             .attr("height", function () {
                 return h - yScale(0);
             })
-            // Get actual data
-            .transition()
-            .delay(function () {
-                return Math.random() * 500;
-            })
-            .duration(500)
+            // // Get actual data
+            // .transition()
+            // .delay(function () {
+            //     return Math.random() * 500;
+            // })
+            // .duration(500)
             .attr("y", function (d) {
                 return yScale(d.mean);
             })
             .attr("height", function (d) {
                 return h - yScale(d.mean);
+            });
+
+        // Draw error bars
+        agegroups.selectAll("line")
+            .data(function (d) {
+                return d.values
             })
+            .enter()
+            .append("line")
+            .attr("class", "error-line")
+            .attr("width", xScale1.bandwidth())
+            .attr("x1", function (d) {
+                return xScale1(d.sex) + 7.5
+            })
+            .attr("y1", function (d) {
+                return yScale(d.mean + d.mean_se)
+            })
+            .attr("x2", function (d) {
+                return xScale1(d.sex) + 7.5
+            })
+            .attr("y2", function (d) {
+                return yScale(d.mean - d.mean_se)
+            })
+            .transition()
+            .duration(400);
+
     }
 
 });
