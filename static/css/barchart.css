@@ -49,3 +49,9 @@ g.legend rect {
     margin-bottom: 0.5em;
     margin-top: 0.5em;
 }
+
+/* Error line formatting */
+.error-line {
+    stroke: black;
+    stroke-dasharray: 2, 2;
+}
