@@ -17,5 +17,10 @@ def geo_chart():
     return render_template('cchs_nutrition_geo-en.html', title='CCHS Nutrition - Geography')
 
 
+@app.route('/bar')
+def bar_chart():
+    return render_template('cchs_nutrition_bar-en.html', title='CCHS Nutrition - Bar')
+
+
 if __name__ == '__main__':
     app.run()
