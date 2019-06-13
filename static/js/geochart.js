@@ -26,7 +26,7 @@ var svg = svgContainer
 // Global variable to track which region is currently being hovered over by user
 var hovered_region = null;
 
-d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
+d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
     return {
         nutrient: d['Nutrient/Item (unit)'],
         year: d['Year'],
@@ -522,7 +522,7 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
                     boxplot_data_subset[i].q3_se = parseFloat(boxplot_data_subset[i].q3_se) || 0;
                 }
 
-                console.log(boxplot_data_subset);
+                // console.log(boxplot_data_subset);
 
                 // Grab min and max values
                 var minmax_vals = [
