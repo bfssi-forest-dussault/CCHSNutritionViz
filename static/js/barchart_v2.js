@@ -3,7 +3,7 @@ var margin = {top: 20, right: 80, bottom: 50, left: 60};
 var w = 580 - margin.left - margin.right;
 var h = 480 - margin.top - margin.bottom;
 
-d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
+d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
     return {
         nutrient: d['Nutrient/Item (unit)'],
         year: +d['Year'],
@@ -57,7 +57,7 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
         'Riboflavin (mg/d)',
         'Vitamin C (mg/d)',
         'Niacin (NE/d)',
-        // 'Caffeine (mg/d)',  // This dataset is problematic and breaks the bar chart
+        'Caffeine (mg/d)',
         'Total monounsaturated fats (g/d)',
         'Potassium (mg/d)',
         'Calcium (mg/d)',
@@ -78,7 +78,7 @@ d3.csv("/static/data/NutritionByRegion_2019.csv", function (d) {
         'Naturally occurring folate (mcg/d)',
         'Iron(mg/d)',
         'Total saturated fats (g/d)',
-        'Sugar (g/d)',
+        'Total sugars (g/d)',
         'Vitamin D (mcg/d)',
         'Total fats (g/d)',
         'Thiamin (mg/d)',
