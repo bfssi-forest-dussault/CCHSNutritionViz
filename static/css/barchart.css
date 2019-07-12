@@ -43,7 +43,7 @@ g.legend rect {
 /* Tooltip formatting */
 #tooltip-box {
     display: inline-block;
-    height: 7em;
+    height: auto;
     position: relative;
     width: 100%;
     margin-bottom: 0.5em;
