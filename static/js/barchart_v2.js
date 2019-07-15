@@ -10,7 +10,8 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
         year: +d['Year'],
         sex: d['Sex'],
         mean: +d['Mean'],
-        mean_se: +d['SE_Mean'],
+        // TODO: Values with 'E' char currently break the drawing of these lines. Fix somehow.
+        mean_se: +strip_e_and_coerce_to_float(d['SE_Mean']),
         /* New */
         ear: +d['EAR'],
         pct_ear: d['% <EAR'],
@@ -20,6 +21,7 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
         pct_ul: d['% >UL'],
         cdrr: +d['CDRR'],
         pct_cdrr: d['% >CDRR'],
+        pct_amdr: d['% within AMDR'], // This value is only for the 'Percentage of x...' nutrients (might contain 'F')
         /* End */
         region: d['Reg_Prov'],
         age: d['Age (years)']
@@ -445,6 +447,12 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
                 exceedance_type = 'CDRR'
             }
 
+            // Extract within AMDR value (only applies to 'Percentage of x...' nutrients)
+            if (obj.pct_amdr !== 'F' && obj.pct_amdr !== 0) {
+                exceedance_pct = obj.pct_amdr;
+                exceedance_value = 'AMDR'
+            }
+
             return {
                 'adequacy_value': adequacy_value,
                 'adequacy_pct': adequacy_pct,
@@ -465,20 +473,20 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
 
         function prepare_adequacy_html(d, limit_obj) {
             // TODO: % within AMDR for percentage things
+            // Units
+            var units = extract_units_from_nutrient(d.nutrient);
 
             // object to store data that every object should have
-            var base_html = "<strong>Mean: </strong>" + d.mean + " (±" + d.mean_se + ")" +
+            var base_html = "<strong>Mean: </strong>" + d.mean + " (±" + d.mean_se + ") " + units +
                 "<br><strong>Sex: </strong>" + d.sex +
                 "<br><strong>Age group: </strong>" + d.age;
 
-            // Units
-            var units = extract_units_from_nutrient(d.nutrient);
 
             // Now append to the base_html object as necessary depending on presence of adequacy/limit values
             // Adequacy
             if (limit_obj.adequacy_type === "EAR") {
                 base_html = base_html +
-                    "<br><strong>Estimated Average Requirement (EAR): </strong>" + limit_obj.adequacy_value +
+                    "<br><strong>Est. Average Requirement (EAR): </strong>" + limit_obj.adequacy_value +
                     ' ' + units +
                     "<br><strong>% < EAR: </strong>" + limit_obj.adequacy_pct
             } else if (limit_obj.adequacy_type === "AI") {
@@ -502,7 +510,7 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
             }
 
             base_html = base_html +
-                "<br><strong>Sample Size: </strong>" + d.sample_size;
+                "<br><strong>Sample size: </strong>" + d.sample_size;
 
             return base_html
         }
@@ -598,4 +606,10 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
 
     }
 );
+
+function strip_e_and_coerce_to_float(val) {
+    // Removes 'E' character from string then coerces to float. Used for the mean_se column from the dataset.
+    var val_ = val.replace('E', '');
+    return parseFloat(val_);
+}
 
