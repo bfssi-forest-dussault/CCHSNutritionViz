@@ -12,6 +12,7 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
         mean: +d['Mean'],
         // TODO: Values with 'E' char currently break the drawing of these lines. Fix somehow.
         mean_se: +strip_e_and_coerce_to_float(d['SE_Mean']),
+        confidence_interval: +(strip_e_and_coerce_to_float(d['SE_Mean'])*1.96),  // 1.96xSEM = 95% confidence interval
         /* New */
         ear: +d['EAR'],
         pct_ear: d['% <EAR'],
@@ -186,7 +187,7 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
         Object.keys(data).forEach(
             function (key) {
                 for (var i = 0; i < data[key].values.length; i++) {
-                    upperValues.push(data[key].values[i].mean + data[key].values[i].mean_se)
+                    upperValues.push(data[key].values[i].mean + data[key].values[i].confidence_interval)
                 }
             }
         );
@@ -332,7 +333,7 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
             Object.keys(data).forEach(
                 function (key) {
                     for (var i = 0; i < data[key].values.length; i++) {
-                        upperValues.push(data[key].values[i].mean + data[key].values[i].mean_se);
+                        upperValues.push(data[key].values[i].mean + data[key].values[i].confidence_interval);
                     }
                 }
             );
@@ -591,13 +592,13 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
                     return xScale1(d.sex) + 7.5
                 })
                 .attr("y1", function (d) {
-                    return yScale(d.mean + d.mean_se)
+                    return yScale(d.mean + d.confidence_interval)
                 })
                 .attr("x2", function (d) {
                     return xScale1(d.sex) + 7.5
                 })
                 .attr("y2", function (d) {
-                    return yScale(d.mean - d.mean_se)
+                    return yScale(d.mean - d.confidence_interval)
                 })
                 .transition()
                 .duration(400);
