@@ -3,6 +3,21 @@ var margin = {top: 20, right: 80, bottom: 50, left: 60};
 var w = 580 - margin.left - margin.right;
 var h = 480 - margin.top - margin.bottom;
 
+
+/*
+TODO:
+    - Update master data file with new Iron values from spreadsheet
+    - Add hats to error bars
+    - Adding hashing of the bars where there is an 'E' character; this indicates the entire dataset is suspect
+    - Footnote at bottom of HTML file to display legend
+    - French translations
+    - Add table of currently subsetted data to visualization
+    - Margin between units on y-axis and legend needs to be increased - 4,000 units overlaps slightly with units
+    - Subset by sex, age group? Should be able to remove or add sex
+    - Is it feasible to display both years at the same time e.g. doubling the number of bars (mortality chart might be a good reference?)
+*/
+
+
 d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
     return {
         nutrient: d['Nutrient/Item (unit)'],
@@ -20,8 +35,8 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
         pct_ai: d['% >AI'],
         ul: +d['UL'],
         pct_ul: d['% >UL'],
-        cdrr: +d['CDRR'],
-        pct_cdrr: d['% >CDRR'],
+        cdrr: +d['CDRR'],  // TODO: Fix display; bugged out data - CDRR is not displaying properly for Sodium
+        pct_cdrr: d['% >CDRR'],  // TODO: Deal with empty values
         pct_amdr: d['% within AMDR'], // This value is only for the 'Percentage of x...' nutrients (might contain 'F')
         /* End */
         region: d['Reg_Prov'],
@@ -430,6 +445,7 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
             }
 
             // Extract and parse relevant limit values
+            // TODO: Vitamin D, Iron show strange value for UL and %> UL
             if (obj.cdrr === 0 && obj.ul !== 0) {
                 exceedance_value = obj.ul;
                 if (obj.pct_ul === "F" || obj.pct_ul === "<3") {
@@ -501,7 +517,7 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
                 base_html = base_html +
                     "<br><strong>Upper Limit (UL): </strong>" + limit_obj.exceedance_value +
                     ' ' + units +
-                    "<br><strong>% < UL: </strong>" + limit_obj.exceedance_pct
+                    "<br><strong>% > UL: </strong>" + limit_obj.exceedance_pct
 
             } else if (limit_obj.exceedance_type === "CDRR") {
                 base_html = base_html +
