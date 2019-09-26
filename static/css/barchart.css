@@ -55,3 +55,11 @@ g.legend rect {
     stroke: black;
     stroke-dasharray: 2, 2;
 }
+
+.error-line-hat-t {
+    stroke: black;
+}
+
+.error-line-hat-b {
+    stroke: black;
+}

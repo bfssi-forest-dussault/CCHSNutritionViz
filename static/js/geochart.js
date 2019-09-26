@@ -13,7 +13,7 @@ var h = 580 - margin.top - margin.bottom;
 
 var svgContainer = d3.select("#geochart");
 var boxplotTooltip = d3.select("body").append("div").attr("class", "boxplot-tooltip").style("display", "none");
-;
+
 var svg = svgContainer
     .append("svg")
     .style("display", "block")

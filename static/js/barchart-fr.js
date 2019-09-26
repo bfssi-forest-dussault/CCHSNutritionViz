@@ -1,3 +1,9 @@
+/*
+Investigate using d3.format to change locale to allow for commas instead of decimals for numeric display
+This might be difficult/unfeasible due to the mixed data type encoding of the various columns.
+*/
+
+
 //Width and height
 var margin = { top: 20, right: 80, bottom: 50, left: 80 };
 var w = 640 - margin.left - margin.right;
@@ -10,70 +16,70 @@ function stripECoerceToFloat(val) {
 }
 
 
-d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
+d3.csv("static/data/NutritionByRegion_Sept2019-fr.csv", function(d) {
     return {
         // Rendered data
-        nutrient: d['Nutrient/Item (unit)'],
+        nutrient: d['Nutriment/Item (unité)'],
         sample_size: +d['n'],
-        year: +d['Year'],
-        sex: d['Sex'],
-        mean: +d['Mean'],
-        mean_se: +stripECoerceToFloat(d['SE_Mean']),
+        year: +d['Année'],
+        sex: d['Sexe'],
+        mean: +d['Moyenne'],
+        mean_se: +stripECoerceToFloat(d['ÉT_Moyenne']),
         e_flag: d['e_flag'], // Detects presence of 'E' in original SE_Mean column before processing
-        confidence_interval: +(stripECoerceToFloat(d['SE_Mean']) * 1.96), // 1.96xSEM = 95% confidence interval
-        ear: d['EAR'],
-        pct_ear: d['% <EAR'],
-        ai: d['AI'],
-        pct_ai: d['% >AI'],
-        ul: d['UL'],
-        pct_ul: d['% >UL'],
-        cdrr: d['CDRR'],
-        pct_cdrr: d['% >CDRR'],
-        pct_amdr: d['% within AMDR'],
-        region: d['Reg_Prov'],
-        age: d['Age (years)'],
+        confidence_interval: +(stripECoerceToFloat(d['ÉT_Moyenne']) * 1.96), // 1.96xSEM = 95% confidence interval
+        ear: d['BME'],
+        pct_ear: d['% <BME'],
+        ai: d['AS'],
+        pct_ai: d['% >AS'],
+        ul: d['AMT'],
+        pct_ul: d['% >AMT'],
+        cdrr: d['RRMC'],
+        pct_cdrr: d['% >RRMC'],
+        pct_amdr: d['%entreÉVAM'],
+        region: d['Rég_Prov'],
+        age: d['Âge (en années)'],
 
         // Data to include in table
         p5: d['P5'],
-        p5_se: d['P5_SE'],
+        p5_se: d['P5_ET'],
         p10: d['P10'],
-        p10_se: d['P10_SE'],
+        p10_se: d['P10_ET'],
         p25: d['P25'],
-        p25_se: d['P25_SE'],
+        p25_se: d['P25_ET'],
         p50: d['P50'],
-        p50_se: d['P50_SE'],
+        p50_se: d['P50_ET'],
         p75: d['P75'],
-        p75_se: d['P75_SE'],
+        p75_se: d['P75_ET'],
         p90: d['P90'],
-        p90_se: d['P90_SE'],
+        p90_se: d['P90_ET'],
         p95: d['P95'],
-        p95_se: d['P95_SE'],
+        p95_se: d['P95_ET'],
 
-        ear_pct_se: d['%<EAR_SE'],
-        ear_pct_se_p: d['p-value_%EAR'],
+        ear_pct_se: d['%<BME_ET'],
+        ear_pct_se_p: d['valeur p_%BME'],
 
-        ai_pct_se: d['%>AI_SE'],
-        ai_pct_p: d['p-value_%AI'],
+        ai_pct_se: d['%>AS_ET'],
+        ai_pct_p: d['valeur p_%>AS'],
 
-        ul_pct_se: d['%>UL_SE'],
-        ul_pct_p: d['p-value_%UL'],
+        ul_pct_se: d['% >AMT_ET'],
+        ul_pct_p: d['valeur p_%>AMT'],
 
-        amdr: d['AMDR'],
-        amdr_pct_below: d['% below AMDR'],
-        amdr_pct_below_p: d['p-value % below AMDR'],
-        amdr_pct_below_se: d['% below AMDR_SE'],
-        amdr_pct_within_se: d['% within AMDR_SE'],
-        amdr_pct_within_p: d['p-value  % within AMDR'],
-        amdr_pct_above: d['% above AMDR'],
-        amdr_pct_above_p: d['p-value % above AMDR'],
-        amdr_pct_above_se: d['% above AMDR_SE'],
+        amdr: d['ÉVAM'],
+        amdr_pct_below: d['% < ÉVAM'],
+        amdr_pct_below_p: d['valeur p_%<ÉVAM'],
+        amdr_pct_below_se: d['% < ÉVAM_ET'],
+        amdr_pct_within_se: d['%entreÉVAM_ET'],
+        amdr_pct_within_p: d['valeur p_%entreÉVAM'],
+        amdr_pct_above: d['% > ÉVAM'],
+        amdr_pct_above_p: d['ÉVAM'],
+        amdr_pct_above_se: d['% > ÉVAM_ET'],
 
-        cdrr_pct_se: d['%>CDRR_SE'],
-        cdrr_pct_p: d['p-value_%CDRR'],
+        cdrr_pct_se: d['% >RRMC_ET'],
+        cdrr_pct_p: d['valeur p_%>RRMC'],
 
-        inad_pct: d['%Inadequacy'],
-        inad_pct_se: d['%Inadequacy_SE'],
-        inad_pct_p: d['p_value %Inadequacy']
+        inad_pct: d['%Carence'],
+        inad_pct_se: d['%Carence_ET'],
+        inad_pct_p: d['valeur p_%Carence']
     };
 }).then(function(data) {
     data = d3.nest()
@@ -97,70 +103,73 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
     var nutrientDropdown = d3.select("#nutrientDropdown");
 
     var regionList = [
-        'Canada excluding territories',
-        'Newfoundland and Labrador',
-        'Prince Edward Island',
-        'Nova Scotia',
-        'New Brunswick',
-        'Quebec',
+        'Canada excluant les territoires',
+        'Terre-Neuve-et-Labrador',
+        'Île-du-Prince-Édouard',
+        'Nouvelle-Écosse',
+        'Nouveau-Brunswick',
+        'Québec',
         'Ontario',
         'Manitoba',
         'Alberta',
         'Saskatchewan',
-        'British Columbia',
-        'Atlantic Region',
-        'Prairie Region'
-    ];
+        'Colombie-Britannique',
+        'Région de l’Atlantique',
+        'Région des Prairies'
+    ].sort();
     var nutrientList = [
-        'Total energy intake (kcal/d)',
-        'Magnesium (mg/d)',
-        'Linolenic fatty acid (g/d)',
-        'Folate (DFE/d)',
-        'Riboflavin (mg/d)',
-        'Vitamin C (mg/d)',
-        'Niacin (NE/d)',
-        'Caffeine (mg/d)',
-        'Total monounsaturated fats (g/d)',
-        'Potassium (mg/d)',
-        'Calcium (mg/d)',
-        'Percentage of total energy intake from fat',
-        'Percentage of total energy intake from monounsaturated fats',
-        'Percentage of total energy intake from sugars',
-        'Percentage of total energy intake from protein',
-        'Phosphorus (mg/d)',
-        'Percentage of total energy intake from carbohydrates',
-        'Percentage of total energy intake from linolenic fatty',
-        'Moisture (g/d)',
-        'Vitamin A (RAE/d)',
-        'Vitamin B6 (mg/d)',
-        'Linoleic fatty acid (g/d)',
-        'Sodium (mg/d)',
-        'Total polyunsaturated fats (g/d)',
-        'Protein (g/d)',
-        'Naturally occurring folate (mcg/d)',
-        'Iron (mg/d)',
-        'Total saturated fats (g/d)',
-        'Total sugars (g/d)',
-        'Vitamin D (mcg/d)',
-        'Total fats (g/d)',
-        'Thiamin (mg/d)',
-        'Percentage of total energy intake from linoleic fatty',
-        'Cholesterol (mg/d)',
-        'Folacin (mcg/d)',
-        'Percentage of total energy intake from polyunsaturated fats',
-        'Vitamin B12 (mcg/d)',
-        'Total carbohydrates (g/d)',
-        'Percentage of total energy intake from saturated fats',
-        'Zinc (mg/d)',
-        'Total dietary fibre (g/d)'
-    ];
+        'Magnésium (mg/j)',
+        'Acide linolénique (g/j)',
+        'Folate (ÉFA/j)',
+        'Riboflavine (mg/j)',
+        'Vitamine C (mg/j)',
+        'Niacine (ÉN/j)',
+        'Caféine (mg/j)',
+        'Acides gras monoinsaturés totaux (g/j)',
+        'Potassium (mg/j)',
+        'Calcium (mg/j)',
+        "Pourcentage de l'apport énergétique total provenant des protéines",
+        "Pourcentage de l'apport énergétique total provenant des lipides",
+        "Pourcentage de l'apport énergétique total provenant des acides gras monoinsaturés",
+        "Pourcentage de l'apport énergétique total provenant des sucres",
+        'Apport énergétique (kcal/j)',
+        'Phosphore (mg/j)',
+        "Pourcentage de l'apport énergétique total provenant des glucides",
+        "Pourcentage de l'apport énergétique total provenant de l'acide linolénique",
+        'Eau totale (g/j)',
+        'Vitamine A (ÉAR/j)',
+        'Vitamine B6 (mg/j)',
+        'Acide linoléique (g/j)',
+        'Sodium (mg/j)',
+        'Acides gras polyinsaturés totaux (g/j)',
+        'Protéines (g/j)',
+        'Folate de source naturelle (mcg/j)',
+        'Fer (mg/j)',
+        'Acides gras saturés totaux (g/j)',
+        'Sucres totaux (g/j)',
+        'Vitamine D (mcg/j)',
+        'Lipides totaux (g/j)',
+        'Thiamine (mg/j)',
+        "Pourcentage de l'apport énergétique total provenant de l'acide linoléique",
+        'Cholestérol (mg/j)',
+        'Folacine (mcg/j)',
+        "Pourcentage de l'apport énergétique total provenant des acides gras polyinsaturés",
+        'Vitamine B12 (mcg/j)',
+        'Glucides totaux (g/j)',
+        "Pourcentage de l'apport énergétique total provenant des acides gras saturés",
+        'Zinc (mg/j)',
+        'Fibres alimentaires totales (g/j)'
+    ].sort();
 
     // Categories for chart labelling
-    var ageCategories = ['9-13', '14-18', '19-30', '31-50',
-        '51-70', '19 years and over', '71 years and over'
+    var ageCategories = ['9 à 13', '14 à 18', '19 à 30', '31 à 50',
+        '51 à 70', '19 ans et plus', '71 ans et plus'
     ];
-    var sexCategories = ['Male', 'Female', 'Both'];
+    var sexCategories = ['Hommes', 'Femmes', 'Les deux sexes'];
     var yearCategories = ['2004', '2015'];
+
+    // Variable to track whether we need to reset the x-axis or not (depending on selection in Sex dropdown)
+    var updatexAxis = false;
 
     // Setup dropdown menus
     sexDropdown.append("select")
@@ -205,57 +214,57 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
     // Headers to render in the HTML data table
     // Note that we have to escape the < character with &lt;
     let nutrient_headers = [
-        'Nutrient',
-        'Region / Province',
-        'Year',
-        'Sex',
-        'Age',
-        'Sample size',
-        'Mean',
-        'Mean SE',
-        'EAR',
-        '% &lt;EAR',
-        'AI',
-        '% > AI',
-        'UL',
-        '% > UL',
-        'CDRR',
-        '% > CDRR',
+        'Nutriment/Item (unité)',
+        'Rég_Prov',
+        'Année',
+        'Sexe',
+        'Âge (en années)',
+        'n',
+        'Moyenne',
+        'ÉT_Moyenne',
+        'BME',
+        '% &lt;BME',
+        'AS',
+        '% >AS',
+        'AMT',
+        '% > AMT',
+        'RRMC',
+        '% > RRMC',
         // Extra table-only data
         'P5',
-        'P5_SE',
+        'P5_ET',
         'P10',
-        'P10_SE',
+        'P10_ET',
         'P25',
-        'P25_SE',
+        'P25_ET',
         'P50',
-        'P50_SE',
+        'P50_ET',
         'P75',
-        'P75_SE',
+        'P75_ET',
         'P90',
-        'P90_SE',
+        'P90_ET',
         'P95',
-        'P95_SE',
-        '%&lt;EAR_SE',
-        'p-value_%EAR',
-        '%>AI_SE',
-        'p-value_%AI',
-        '%>UL_SE',
-        'p-value_%UL',
-        'AMDR',
-        '% below AMDR',
-        'p-value % below AMDR',
-        '% below AMDR_SE',
-        '% within AMDR_SE',
-        'p-value  % within AMDR',
-        '% above AMDR',
-        'p-value % above AMDR',
-        '% above AMDR_SE',
-        '%>CDRR_SE',
-        'p-value_%CDRR',
-        '%Inadequacy',
-        '%Inadequacy_SE',
-        'p_value %Inadequacy',
+        'P95_ET',
+        '%&lt;BME_ET',
+        'valeur p_%BME',
+        '%>AS_ET',
+        'valeur p_%AS',
+        '%>UL_ET',
+        'valeur p_%AMT',
+        'ÉVAM',
+        '% < ÉVAM',
+        'valeur p_%<ÉVAM',
+        '% < ÉVAM_ET',
+        '%entreÉVAM_ET',
+        'valeur p_%entreÉVAM',
+        '% > ÉVAM',
+        'valeur p_%>ÉVAM',
+        '% > ÉVAM_ET',
+        '% >RRMC_ET',
+        'valeur p_%RRMC',
+        '%Carence',
+        '%Carence_ET',
+        'valeur p_%Carence',
     ];
 
 
@@ -309,9 +318,9 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
         .scale(xScale0)
         .tickFormat(function(d) { // Fit the text on the chart
             switch (d) {
-                case "19 years and over":
+                case "19 ans et plus":
                     return ">= 19";
-                case "71 years and over":
+                case "71 ans et plus":
                     return ">= 71";
                 default:
                     return d;
@@ -347,6 +356,19 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
             .tickFormat("")
         );
 
+    // Binding the data to agegroups
+    let agegroups = svg.selectAll(".year-group")
+        .data(data, d => d.key)
+        .join(
+            enter => enter
+            .append("g")
+            .attr("class", "year-group")
+            .attr("transform", function(d) {
+                return "translate(" + xScale0(d.key) + ",0)";
+            }),
+            exit => exit.remove()
+        );
+
     // X Axis placement and text label
     svg.append("g")
         .attr("class", "x axis")
@@ -358,7 +380,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
             "translate(" + (w / 2) + " ," +
             (h + margin.top + 25) + ")")
         .style("text-anchor", "middle")
-        .text("Age group (years)");
+        .text("Âge (en années)");
 
     // Y Axis placement and text label
     svg.append("g")
@@ -372,7 +394,26 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
         .attr("x", 0 - (h / 2))
         .attr("dy", "1em")
         .style("text-anchor", "middle")
-        .text("Mean " + nutrient);
+        .text(function(d) {
+            return "Moyenne " + nutrient;
+        });
+        
+        svg.append("text")
+        .attr("id", "y-axis-text-1")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left - 3)
+        .attr("x", 0 - (h / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+
+        svg.append("text")
+        .attr("id", "y-axis-text-2")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left + 15)
+        .attr("x", 0 - (h / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+
 
     //Legend
     var legend = svg.selectAll(".legend")
@@ -414,10 +455,10 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
         .html(
             `
             <div class="row">
-                    <caption class='wb-inv'><i>* Error bars represent the 95% confidence interval.</i></caption>
+            <caption class='wb-inv'><i>* Les barres d'erreur représentent l'intervalle de confiance à 95 %.</i></caption>
             </div>
             <div class="row">
-                    <caption class='wb-inv'><i>** Hashed bars should be interpreted with caution.</i></caption>
+            <caption class='wb-inv'><i>** Les barres hachées doivent être interprétées avec prudence.</i></caption>
             </div>
             <br>
             `
@@ -428,7 +469,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
         .on('click', function() {
             // Get the d3js SVG element and save using saveSvgAsPng.js
             saveSvgAsPng(document.getElementsByTagName("svg")[0], "chart.png", { scale: 2, backgroundColor: "#FFFFFF" });
-        });
+        })
 
     // Gridline functions
     function make_y_gridlines() {
@@ -476,24 +517,55 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
         svg.select(".y.axis").transition().duration(600).call(yAxis);
 
         // Update the y-axis text label
-        svg.select("#y-axis-text")
-            .transition()
-            .duration(200)
-            .attr("transform", "rotate(-90)")
-            .attr("y", 0 - margin.left)
-            .attr("x", 0 - (h / 2))
-            .attr("dy", "1em")
-            .style("text-anchor", "middle")
-            .text(
-                function(d) {
-                    if (nutrient.includes("Percentage")) {
-                        return "Mean " + nutrient.replace("Percentage", "%");
-                    }
-                    else {
-                        return "Mean " + nutrient;
-                    }
+        // Need to dynamically detect the super long percentage nutrients and split them on two lines for the y-axis label
+        if (nutrient.includes(" total ")) {
+            let nutrient_relabel = nutrient.replace("Pourcentage", "%");
+            let nutrient_relabel_elements = nutrient_relabel.split("total");
+            let nutrient_yaxis_1 = "Moyenne " + nutrient_relabel_elements[0];
+            let nutrient_yaxis_2 = "total" + nutrient_relabel_elements[1];
 
+            svg.select("#y-axis-text").text("");
+
+            svg.select("#y-axis-text-1")
+                .transition()
+                .duration(200)
+                // First element
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left - 3)
+                .attr("x", 0 - (h / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text(function(d) {
+                    return nutrient_yaxis_1;
                 });
+
+            // Second element
+            svg.select("#y-axis-text-2")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left + 15)
+                .attr("x", 0 - (h / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text(function(d) {
+                    return nutrient_yaxis_2;
+                });
+
+        }
+        else {
+            svg.select("#y-axis-text-1").text("");
+            svg.select("#y-axis-text-2").text("");
+            svg.select("#y-axis-text")
+                .transition()
+                .duration(200)
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (h / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text(function(d) {
+                    return "Moyenne " + nutrient;
+                });
+        }
 
         // Age categories will change according to available data
         ageCategories = [];
@@ -519,9 +591,9 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
             .scale(xScale0)
             .tickFormat(function(d) { // To make the text fit more comfortably, do a text replacement
                 switch (d) {
-                    case "19 years and over":
+                    case "19 ans et plus":
                         return ">= 19";
-                    case "71 years and over":
+                    case "71 ans et plus":
                         return ">= 71";
                     default:
                         return d;
@@ -607,7 +679,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
                 .on("mouseout", function(d) {
                     // Restore original color
                     d3.select(this).style("fill", function(d) {
-                        d3.select("#tooltip-box").html("<i>Hover your cursor over the bars for additional detail.</i>"); // Empty the data box
+                        d3.select("#tooltip-box").html("<i>Passez votre curseur sur les barres pour plus de détails.</i>"); // Empty the data box
                         if (d.e_flag === "TRUE") {
                             let t = textures.lines().thicker().stroke(d3.rgb(color_range(d.year)));
                             agegroups.call(t);
@@ -704,7 +776,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
                     return xScale1(d.year) + ((xScale0.bandwidth() / 2) / 2);
                 })
                 .attr("y2", function(d) {
-                    return yScale(d.mean - d.confidence_interval);
+                    return yScale(d.mean - d.confidence_interval)
                 }),
 
                 // EXIT
@@ -763,7 +835,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
                     return xScale1(d.year) + ((xScale0.bandwidth() / 2) / 2) + hat_width;
                 })
                 .attr("y2", function(d) {
-                    return yScale(d.mean + d.confidence_interval);
+                    return yScale(d.mean + d.confidence_interval)
                 }),
 
                 // EXIT
@@ -819,7 +891,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
                     return xScale1(d.year) + ((xScale0.bandwidth() / 2) / 2) + hat_width;
                 })
                 .attr("y2", function(d) {
-                    return yScale(d.mean - d.confidence_interval);
+                    return yScale(d.mean - d.confidence_interval)
                 }),
 
                 // EXIT
@@ -829,6 +901,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
 
     function updateTable() {
         // TODO: Render only cols with data. Probably need to redeclare the headers here depending on which columns actually have data. jQuery/datatables approaches are not working. 
+
         // Compose flattened object for each row from main data object
         let rowObjects = [];
         Object.keys(data).forEach(
@@ -1025,6 +1098,19 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
         }
     }
 
+    function stringToRoundFloat(d) {
+        // This is kind of disastrous to implement due to the variety of values 
+        // possible in a cell. e.g. empty, float, or string, or some combo of 
+        // float+string. The requested feature is to round all values to 2 
+        // decimal places in the table.
+        if (isNaN(d) === false) {
+            return null;
+        }
+        else {
+            return d;
+        }
+    }
+
     function parseLimitValues(obj) {
         // Default values
         var adequacy_value = "N/A";
@@ -1043,7 +1129,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
             else {
                 adequacy_pct = parseFloat(obj.pct_ear).toFixed(2);
             }
-            adequacy_type = 'EAR';
+            adequacy_type = 'BME';
         }
         else if (obj.ai !== "" && obj.ear === "") {
             adequacy_value = obj.ai;
@@ -1054,7 +1140,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
                 adequacy_pct = parseFloat(obj.pct_ai).toFixed(2);
 
             }
-            adequacy_type = 'AI';
+            adequacy_type = 'AS';
         }
 
         // Extract and parse relevant limit values
@@ -1067,7 +1153,7 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
             else {
                 exceedance_pct = parseFloat(obj.pct_ul).toFixed(2);
             }
-            exceedance_type = 'UL';
+            exceedance_type = 'AMT';
         }
         else if (obj.cdrr !== "" && obj.ul === "") {
             exceedance_value = obj.cdrr;
@@ -1077,13 +1163,13 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
             else {
                 exceedance_pct = parseFloat(obj.pct_cdrr).toFixed(2);
             }
-            exceedance_type = 'CDRR';
+            exceedance_type = 'RRMC';
         }
 
         // Extract within AMDR value (only applies to 'Percentage of x...' nutrients)
         if (obj.pct_amdr !== 'F' && obj.pct_amdr !== "") {
             exceedance_pct = obj.pct_amdr;
-            exceedance_value = 'AMDR';
+            exceedance_value = 'ÉVAM';
         }
 
         return {
@@ -1123,41 +1209,41 @@ d3.csv("static/data/NutritionByRegion_Sept2019.csv", function(d) {
 
         // store basic data that every object should have
         var base_html =
-            "<strong>Age group: </strong>" + d.age +
-            "<br><strong>Year: </strong>" + d.year +
-            "<br><strong>Mean: </strong>" + d.mean + " (±" + mean_se + ") " + units;
+            "<strong>Âge (en années): </strong>" + d.age +
+            "<br><strong>Année: </strong>" + d.year +
+            "<br><strong>Moyenne: </strong>" + d.mean + " (±" + mean_se + ") " + units;
 
         // Now append to the base_html object as necessary depending on presence of adequacy/limit values
         // Adequacy
-        if (limit_obj.adequacy_type === "EAR") {
+        if (limit_obj.adequacy_type === "BME") {
             base_html = base_html +
-                "<br><strong>EAR: </strong>" + limit_obj.adequacy_value +
+                "<br><strong>BME: </strong>" + limit_obj.adequacy_value +
                 ' ' + units +
-                "<br><strong>% < EAR: </strong>" + limit_obj.adequacy_pct;
+                "<br><strong>% < BME: </strong>" + limit_obj.adequacy_pct;
         }
-        else if (limit_obj.adequacy_type === "AI") {
+        else if (limit_obj.adequacy_type === "AS") {
             base_html = base_html +
-                "<br><strong>AI: </strong>" + limit_obj.adequacy_value + ' ' + units +
-                "<br><strong>% > AI: </strong>" + limit_obj.adequacy_pct;
+                "<br><strong>AS: </strong>" + limit_obj.adequacy_value + ' ' + units +
+                "<br><strong>% > AS: </strong>" + limit_obj.adequacy_pct;
         }
 
         // Limits
-        if (limit_obj.exceedance_type === "UL") {
+        if (limit_obj.exceedance_type === "AMT") {
             base_html = base_html +
-                "<br><strong>UL: </strong>" + limit_obj.exceedance_value +
+                "<br><strong>AMT: </strong>" + limit_obj.exceedance_value +
                 ' ' + units +
-                "<br><strong>% > UL: </strong>" + limit_obj.exceedance_pct;
+                "<br><strong>% > AMT: </strong>" + limit_obj.exceedance_pct;
 
         }
-        else if (limit_obj.exceedance_type === "CDRR") {
+        else if (limit_obj.exceedance_type === "RRMC") {
             base_html = base_html +
-                "<br><strong>CDRR: </strong>" + limit_obj.exceedance_value +
+                "<br><strong>RRMC: </strong>" + limit_obj.exceedance_value +
                 ' ' + units +
-                "<br><strong>% > CDRR: </strong>" + limit_obj.exceedance_pct;
+                "<br><strong>% > RRMC: </strong>" + limit_obj.exceedance_pct;
         }
 
         base_html = base_html +
-            "<br><strong>Sample size: </strong>" + d.sample_size;
+            "<br><strong>n: </strong>" + d.sample_size;
 
         return base_html;
     }
