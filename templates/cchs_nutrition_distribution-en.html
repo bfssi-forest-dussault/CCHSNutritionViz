@@ -154,8 +154,37 @@
 
         <div class="row">
             <!--{# Main chart is populated here #}-->
-            <p>Chart #distribution-chart</p>
             <div id="distribution-chart" class="col-lg-4 col-lg-8 brdr-lft" style="overflow:visible"></div>
+        </div>
+        <div>
+            <form>
+                <input type="checkbox" id="checkbox2004"> 2004
+                <input type="checkbox" id="checkbox2015"> 2015
+                <input type="checkbox" id="checkboxLimit"> Limit Value
+            </form>
+        </div>
+
+        <div class="container-fluid">
+
+            <!--{# Dropdown menus for filtering chart data #}-->
+            <fieldset>
+                <h3 class="h6 mrgn-tp-0 mrgn-rght-0 mrgn-bttm-sm">
+                                <span id="ContentPlaceHolder_Body_LabelStep1" class="text-danger">
+                            Specify parameters below:
+                        </span>
+                </h3>
+                <div class="form-group-sm">
+                    <label for="sexDropdown">Sex</label>
+                    <div id="sexDropdown" class="chart-selector"></div>
+                    <label for="provinceDropdown">Region</label>
+                    <div id="provinceDropdown" class="chart-selector"></div>
+                    <label for="nutrientDropdown">Nutrient</label>
+                    <div id="nutrientDropdown" class="chart-selector"></div>
+                    <label for="ageDropdown">Age Group</label>
+                    <div id="ageDropdown" class="chart-selector"></div>
+                </div>
+            </fieldset>
+
         </div>
     </div>
 
