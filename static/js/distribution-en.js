@@ -1,14 +1,9 @@
-/*
-- Distribution will only display a certain subset of 'nutrients of interest'
-- Distribution values will be provided by Cunye. Using a temporary dataset for now.
- */
-
 //Width and height
 const margin = {top: 60, right: 80, bottom: 60, left: 80};
 const w = 720 - margin.left - margin.right;
 const h = 480 - margin.top - margin.bottom;
 
-// Command to take every 10th row in Python: df.iloc[::10,:]
+// TODO: Delete/filter all negative values from dataset
 
 d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
     // Iterate over every column and cast it to a float if it looks like a number
@@ -88,14 +83,14 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
         'Zinc (mg/d)',
         'Total dietary fibre (g/d)'
     ].sort();
-    const sexCategories = ['Male',
+    const sexCategories = [
+        'Male',
         'Female',
         // 'Both'
     ];
 
     // Filter the data according to dropdown menu selections
     const sexDropdown = d3.select("#sexDropdown");
-    // const provinceDropdown = d3.select("#provinceDropdown");
     const nutrientDropdown = d3.select("#nutrientDropdown");
     const ageDropdown = d3.select("#ageDropdown");
 
@@ -211,15 +206,54 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
     let lineGenerator = d3.line();
     let activeReferenceObject = {};
 
+    // Legend
+    let legend = svg.selectAll(".legend")
+        .data(yearCategories)
+        .enter().append("g")
+        .attr("class", "legend")
+        .attr("transform", function (d, i) {
+            return "translate(0," + i * 20 + ")";
+        })
+        .style("opacity", "1");
+
+    legend.append("rect")
+        .attr("x", w + margin.right / 4)
+        .attr("width", 15)
+        .attr("height", 15)
+        .style("fill", function (d) {
+            return colourScale(d);
+        })
+        .on("mouseover", function () {
+                d3.select(this).style("fill", function (d) {
+                    return d3.rgb(colourScale(d)).darker(1);
+                });
+            }
+        )
+        .on("mouseout", function () {
+                d3.select(this).style("fill", function (d) {
+                    return d3.rgb(colourScale(d)).brighter(1);
+                });
+            }
+        )
+        // Spoof clicking the tick boxes
+        .on("click", function (d) {
+            $(`#checkbox${d}`).click()
+        });
+
+    legend.append("text")
+        .attr("x", w + margin.right / 2)
+        .attr("y", 9)
+        .attr("dy", ".35em")
+        .style("text-anchor", "left")
+        .text(function (d) {
+            return d;
+        });
+
+
     // Enter the initial dataset
     draw_curves();
 
     function draw_limit() {
-
-        // // Cleanup
-        // ul.selectAll(".limit-line").remove();
-        // ul.selectAll(".limit-line-text").remove();
-
         // Prepare adequacy line data
         adequacyVal = activeReferenceObject['Adequacy-Value'];
         let adequacyPoints = [
@@ -244,8 +278,8 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
                     }
                 }),
             update => update
-                .transition()
-                .duration(500)
+            // .transition()
+            // .duration(100)
                 .attr('d', function () {
                         if (drawLimit && renderAdequacyTracker.render_adequacy) {
                             return adequacyPathData
@@ -255,30 +289,39 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
                     }
                 ));
 
+        let textPadding = 5; // Controls height of text above yMax
+
         // Adequacy text
+        let adequacyTypeText = null;
+        if (typeof activeReferenceObject['Adequacy-Type'] == "string") {
+            adequacyTypeText = activeReferenceObject['Adequacy-Type'];
+        }
+
         ul.selectAll(".adequacy-line-text").data([null]).join(
             enter => enter
                 .append("text")
                 .attr("class", "adequacy-line-text")
                 .attr("x", xAxis(adequacyVal))
-                .attr("y", yAxis(yExtent[1]))
+                .attr("y", yAxis(yExtent[1]) - textPadding)
                 .style("text-anchor", "middle")
-                .text(activeReferenceObject['Adequacy-Type']),
+                .text(adequacyTypeText),
             update => update
-                .transition()
-                .duration(500)
+            // .attr("x", xAxis(adequacyVal))
+            // .attr("y", -100)
+            // .transition()
+            // .duration(500)
                 .attr("x", xAxis(adequacyVal))
-                .attr("y", yAxis(yExtent[1]))
+                .attr("y", yAxis(yExtent[1]) - textPadding)
                 .text(function () {
                     if (drawLimit && renderAdequacyTracker.render_adequacy) {
-                        return activeReferenceObject['Adequacy-Type']
+                        return adequacyTypeText
                     } else {
                         return null;
                     }
                 })
         );
 
-        // Prepare exceedance  line data
+        // Prepare exceedance line data
         exceedanceVal = activeReferenceObject['Excess-Value'];
         let exceedancePoints = [
             [xAxis(exceedanceVal), yAxis(0)],
@@ -302,8 +345,8 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
                     }
                 }),
             update => update
-                .transition()
-                .duration(500)
+            // .transition()
+            // .duration(100)
                 .attr('d', function () {
                         if (drawLimit && renderAdequacyTracker.render_exceedance) {
                             return exceedancePathData
@@ -314,22 +357,26 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
                 ));
 
         // Exceedance text
+        let exceedanceTypeText = null;
+        if (typeof activeReferenceObject['Excess-Type'] == "string") {
+            exceedanceTypeText = activeReferenceObject['Excess-Type'];
+        }
         ul.selectAll(".exceedance-line-text").data([null]).join(
             enter => enter
                 .append("text")
                 .attr("class", "exceedance-line-text")
                 .attr("x", xAxis(exceedanceVal))
-                .attr("y", yAxis(yExtent[1]))
+                .attr("y", yAxis(yExtent[1]) - textPadding)
                 .style("text-anchor", "middle")
-                .text(activeReferenceObject['Excess-Type']),
+                .text(exceedanceTypeText),
             update => update
-                .transition()
-                .duration(500)
+            // .transition()
+            // .duration(500)
                 .attr("x", xAxis(exceedanceVal))
-                .attr("y", yAxis(yExtent[1]))
+                .attr("y", yAxis(yExtent[1]) - textPadding)
                 .text(function () {
                     if (drawLimit && renderAdequacyTracker.render_exceedance) {
-                        return activeReferenceObject['Excess-Type']
+                        return exceedanceTypeText
                     } else {
                         return null;
                     }
@@ -338,26 +385,28 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
     }
 
     function draw_curves() {
-        // update data
+        // Main method for drawing the curves, limit lines, and updating the axes
+
+        // Grab most recent user selected data
         age = $("#ageDropdownSelector option:selected").text();
         nutrient = $("#nutrientDropdownSelector option:selected").text();
         sex = $("#sexDropdownSelector option:selected").text();
 
+        // Store new dataset
         data = master_data[age][nutrient][sex];
-        referenceCode = data[0]['ref_code']; // Grab reference code --> gets used in draw_limit()
 
+        // Grab reference code --> gets used in draw_limit() and retrieves pertinent adequacy/exceedance reference code
+        referenceCode = data[0]['ref_code'];
         activeReferenceObject = retrieve_reference_values(referenceCode);
-        console.log(activeReferenceObject);
         update_render_tracker_adequacy(activeReferenceObject);
-        // console.log(renderAdequacyTracker);
 
-        // Update x-axis
+        // Update x-axis min and max values
         xExtent = d3.extent(data, d => d.x);
         let minX = xExtent[0];
         let maxX = xExtent[1];
 
-        // Determine if maxX needs to be adjusted
         if (drawLimit) {
+            // Determine if maxX needs to be adjusted
             if (renderAdequacyTracker.render_adequacy && (activeReferenceObject['Adequacy-Value'] > maxX)) {
                 maxX = activeReferenceObject['Adequacy-Value']
             }
@@ -374,7 +423,7 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
             }
         }
 
-        xExtent = d3.extent(data, d => d.x);
+        // Update x-axis
         xAxis = d3.scaleLinear()
             .domain([minX, maxX]) // data range
             .range([0, w]); // pixel range
@@ -388,6 +437,9 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
         svg.select(".y-axis").transition().duration(500).call(d3.axisLeft(yAxis));
         svg.select(".x-axis").call(d3.axisBottom(xAxis));
 
+        svg.selectAll(".y-axis .tick").remove();  // This removes the ticks and text for the y-axis
+
+        // Nest data by year so we can draw the two curves separately
         data = d3.nest()
             .key(function (d) {
                 return d['Year'];
@@ -402,7 +454,7 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
                     enter => enter.append("path")
                         .attr("class", `curve-${year}`)
                         .attr("fill", colourScale(year))
-                        .attr("fill-opacity", ".4")
+                        .attr("fill-opacity", "0")
                         .attr("stroke", colourScale(year))
                         .attr("stroke-width", 2)
                         .attr("stroke-linejoin", "round")
@@ -445,8 +497,12 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
     function update_render_tracker_adequacy(reference_object) {
         // There are cases where one value is available, both values are available, and neither value is available.
         // The graphic must respond accordingly.
+
+        // True if there's a string value available
         let adequacy_type_available = typeof (reference_object['Adequacy-Type']) == "string";
         let exceedance_type_available = typeof (reference_object['Excess-Type']) == "string";
+
+        // Update the render object
         renderAdequacyTracker.render_adequacy = adequacy_type_available;
         renderAdequacyTracker.render_exceedance = exceedance_type_available;
     }
@@ -459,17 +515,23 @@ d3.csv("static/data/distributions-sub20-en.csv").then(function (data) {
     }
 
     function year_tickbox() {
+        // Updates the renderYearTracker bool status for each year depending on whether the tickbox is checked or not
         renderYearTracker[2004] = !!d3.select("#checkbox2004").property("checked");
         renderYearTracker[2015] = !!d3.select("#checkbox2015").property("checked");
         draw_curves();
     }
 
     function limit_tickbox() {
+        // Updates the drawLimit bool depending on user selection for the Limit Value(s) tickbox
         drawLimit = !!d3.select("#checkboxLimit").property("checked");
         draw_curves();
     }
 
 });
+
+// Hard-coded reference values for each Nutrient/Sex/Age group (each is assigned its own unique ref-code)
+// Values were generated with reformat_distribution_data.ipynb script
+// ../CCHSNutritionViz/DistributionData2019Raw/DistributionReferenceValues-EN.json
 
 const coding_object = [
     {
