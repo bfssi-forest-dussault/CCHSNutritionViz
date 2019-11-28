@@ -1,6 +1,9 @@
-<!DOCTYPE html><!--[if lt IE 9]><html class="no-js lt-ie9" lang="en" dir="ltr"><![endif]--><!--[if gt IE 8]><!-->
+<!DOCTYPE html>
+<!--[if lt IE 9]><html class="no-js lt-ie9" lang="en" dir="ltr"><![endif]-->
+<!--[if gt IE 8]><!-->
 <html class="no-js" lang="en" dir="ltr">
 <!--<![endif]-->
+
 <head>
     <meta charset="utf-8">
     <!-- Web Experience Toolkit (WET) / Boîte à outils de l'expérience Web (BOEW)
@@ -12,11 +15,12 @@
           content="Web Experience Toolkit (WET) includes reusable components for building and maintaining innovative Web sites that are accessible, usable, and interoperable. These reusable components are open source software and free for use by departments and external Web communities">
     <!-- Meta data-->
     <!--[if gte IE 9 | !IE ]><!-->
-    <link href="/static/GCWeb/assets/favicon.ico" rel="icon" type="image/x-icon">
-    <link rel="stylesheet" href="/static/GCWeb/css/theme.min.css">
+    <link href="../static/GCWeb/assets/favicon.ico" rel="icon" type="image/x-icon">
+    <link rel="stylesheet" href="../static/GCWeb/css/theme.min.css">
 
-    {# Custom barchart css #}
-    <link rel="stylesheet" href="/static/css/barchart.css">
+    <!--{# Custom barchart css #}-->
+    <link rel="stylesheet" href="../static/css/barchart.css">
+
     <!--<![endif]-->
     <!--[if lt IE 9]>
 		<link href="./GCWeb/assets/favicon.ico" rel="shortcut icon" />
@@ -30,26 +34,33 @@
 
     <![endif]-->
     <noscript>
-        <link rel="stylesheet" href="/static/wet-boew/css/noscript.min.css"/>
+        <link rel="stylesheet" href="../static/wet-boew/css/noscript.min.css"/>
     </noscript>
     <!-- Google Tag Manager DO NOT REMOVE OR MODIFY - NE PAS SUPPRIMER OU MODIFIER -->
-    <script>dataLayer1 = [];</script>
+    <script>
+        dataLayer1 = [];
+    </script>
     <!-- End Google Tag Manager -->
 </head>
+
 <body vocab="http://schema.org/" typeof="WebPage">
 <!-- Google Tag Manager DO NOT REMOVE OR MODIFY - NE PAS SUPPRIMER OU MODIFIER -->
 <noscript>
     <iframe title="Google Tag Manager" src="//www.googletagmanager.com/ns.html?id=GTM-TLGQ9K" height="0" width="0"
             style="display:none;visibility:hidden"></iframe>
 </noscript>
-<script>(function (w, d, s, l, i) {
-    w[l] = w[l] || [];
-    w[l].push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
-    var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer1' ? '&l=' + l : '';
-    j.async = true;
-    j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
-    f.parentNode.insertBefore(j, f);
-})(window, document, 'script', 'dataLayer1', 'GTM-TLGQ9K');</script>
+<script>
+    (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+        var f = d.getElementsByTagName(s)[0],
+            j = d.createElement(s),
+            dl = l != 'dataLayer1' ? '&l=' + l : '';
+        j.async = true;
+        j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer1', 'GTM-TLGQ9K');
+</script>
 <!-- End Google Tag Manager -->
 <ul id="wb-tphp">
     <li class="wb-slc">
@@ -66,14 +77,14 @@
             <div class="row">
                 <div class="col-md-12">
                     <ul class="list-inline margin-bottom-none">
-                        <li><a lang="fr" href="cchs_nutrition-fr.html">Français</a></li>
+                        <li><a lang="fr" href="cchs_nutrition_bar-fr.html">Français</a></li>
                     </ul>
                 </div>
             </div>
         </section>
         <div class="row">
             <div class="brand col-xs-8 col-sm-9 col-md-6">
-                <a href="https://www.canada.ca/en.html"><img src="/static/GCWeb/assets/sig-blk-en.svg" alt=""><span
+                <a href="https://www.canada.ca/en.html"><img src="../static/GCWeb/assets/sig-blk-en.svg" alt=""><span
                         class="wb-inv"> Government of Canada / <span lang="fr">Gouvernement du Canada</span></span></a>
             </div>
             <section class="wb-mb-links col-xs-4 col-sm-3 visible-sm visible-xs" id="wb-glb-mn">
@@ -106,7 +117,7 @@
             </section>
         </div>
     </div>
-    <nav role="navigation" id="wb-sm" data-ajax-replace="/static/ajax/sitemenu-en.html" data-trgt="mb-pnl"
+    <nav role="navigation" id="wb-sm" data-ajax-replace="static/ajax/sitemenu-en.html" data-trgt="mb-pnl"
          class="wb-menu visible-md visible-lg" typeof="SiteNavigationElement">
         <div class="container nvbar">
             <h2>Topics menu</h2>
@@ -136,78 +147,46 @@
     </nav>
 </header>
 <main role="main" property="mainContentOfPage" class="container">
+    <div class="container-fluid">
+        <h1 property="name" id="wb-cont">Distribution Chart <small><strong>From <a href="#">Health
+            Canada</a></strong></small>
+        </h1>
 
-    <h1 property="name" id="wb-cont">CCHS Nutrition Data</h1>
-    <p><strong>From <a href="#">Health Canada</a></strong></p>
+        <div class="row">
+            <!--{# Main chart is populated here #}-->
+            <div id="distribution-chart" class="col-lg-4 col-lg-8 brdr-lft" style="overflow:visible"></div>
+        </div>
+        <div>
+            <form>
+                <input type="checkbox" id="checkbox2004"> 2004
+                <input type="checkbox" id="checkbox2015"> 2015
+                <input type="checkbox" id="checkboxLimit"> Limit Value(s)
+            </form>
+        </div>
 
-    <div class="row">
-        {# Options and metadata for chart #}
-        <div class="col-lg-5 col-md-5 col-sm-12" style="overflow:visible;">
+        <div class="container-fluid">
 
-            <div class="container-fluid">
-                <h2 class="mrgn-tp-0">Nutrition Data Visualisation</h2>
-
-                {# Dropdown menus for filtering chart data #}
-                <fieldset>
-                    <h3 class="h6 mrgn-tp-0 mrgn-rght-0 mrgn-bttm-sm">
-                        <span id="ContentPlaceHolder_Body_LabelStep1" class="text-danger">
-                            Select item(s) from each list below:
+            <!--{# Dropdown menus for filtering chart data #}-->
+            <fieldset>
+                <h3 class="h6 mrgn-tp-0 mrgn-rght-0 mrgn-bttm-sm">
+                                <span id="ContentPlaceHolder_Body_LabelStep1" class="text-danger">
+                            Specify parameters below:
                         </span>
-                    </h3>
-                    <div class="form-group-sm">
-                        <label for="yearDropdown">Year</label>
-                        <div id="yearDropdown" class="chart-selector"></div>
-                        <label for="provinceDropdown">Region</label>
-                        <div id="provinceDropdown" class="chart-selector"></div>
-                        <label for="nutrientDropdown">Nutrient</label>
-                        <div id="nutrientDropdown" class="chart-selector"></div>
-                    </div>
-                </fieldset>
-
-                {# Info window #}
-                <div style="width:100%;margin-top:15px" class="alert alert-info">
-                    <p>
-                        <span id="ContentPlaceHolder_Body_LabelHIHomeLink1">
-                            <a href="https://infobase.phac-aspc.gc.ca/something/">
-                                Click here for more information is available about the nutrition data.
-                            </a>
-                        </span>
-                        Hover over any bar in the chart with your mouse cursor to see detailed data.
-                    </p>
+                </h3>
+                <div class="form-group-sm">
+                    <label for="sexDropdown">Sex</label>
+                    <div id="sexDropdown" class="chart-selector"></div>
+                    {#                    <label for="provinceDropdown">Region</label>#}
+                    {#                    <div id="provinceDropdown" class="chart-selector"></div>#}
+                    <label for="nutrientDropdown">Nutrient</label>
+                    <div id="nutrientDropdown" class="chart-selector"></div>
+                    <label for="ageDropdown">Age Group</label>
+                    <div id="ageDropdown" class="chart-selector"></div>
                 </div>
+            </fieldset>
 
-                {# Text for tooltip goes here #}
-                <section id="tooltip-box" class="lnkbx well"></section>
-            </div>
-        </div>
-
-        {# Main bar chart is populated here #}
-        <div id="barchart" class="col-lg-6 col-md-6 col-sm-12 brdr-lft" style="overflow:visible" align="center"></div>
-
-    </div>
-
-    {# Download buttons #}
-    <div class="row" align="center">
-        <br>
-        <button class="btn btn-primary" disabled><span class="glyphicon glyphicon-cloud-download"></span> Chart (.png)
-        </button>
-        <button role="button" class="btn btn-success"
-                onclick="location.href='/static/data/NutritionByRegion_Master.csv'">
-            <span class="glyphicon glyphicon-cloud-download"></span> Full Dataset (.csv)
-        </button>
-    </div>
-
-    <div class="row">
-        <div class="pagedetails">
-            <dl id="wb-dtmd">
-                <dt>Date modified:&#32;</dt>
-                <dd>
-                    <time property="dateModified">2018-06-15</time>
-                </dd>
-            </dl>
         </div>
     </div>
-
 
 </main>
 <footer role="contentinfo" id="wb-info">
@@ -242,27 +221,31 @@
                     <a href="#wb-cont">Top of Page <span class="glyphicon glyphicon-chevron-up"></span></a>
                 </div>
                 <div class="col-xs-6 col-md-3 col-lg-2 text-right">
-                    <img src="/static/GCWeb/assets/wmms-blk.svg" alt="Symbol of the Government of Canada">
+                    <img src="../static/GCWeb/assets/wmms-blk.svg" alt="Symbol of the Government of Canada">
                 </div>
             </div>
         </div>
     </div>
 </footer>
 <!--[if gte IE 9 | !IE ]><!-->
-{#<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.js"></script>#}
-<script src="/static/wet-boew/js/jquery/2.1.4/jquery.js"></script>
-<script src="/static/wet-boew/js/wet-boew.min.js"></script>
+<!--{#<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.js"></script>#}-->
+<script src="../static/wet-boew/js/jquery/2.1.4/jquery.js"></script>
+<script src="../static/wet-boew/js/wet-boew.min.js"></script>
 
-{# d3 #}
-<script src="/static/js/d3.v5.min.js"></script>
+<!--{# d3 + datatables #}-->
+<script src="../static/js/d3.v5.min.js"></script>
+<script src="../static/js/textures.js"></script>
+<script src="../static/js/saveSvgAsPng.js"></script>
+
 
 <!--<![endif]-->
 <!--[if lt IE 9]>
 		<script src="./wet-boew/js/ie8-wet-boew2.min.js"></script>
 
 		<![endif]-->
-<script src="/static/GCWeb/js/theme.min.js"></script>
+<script src="../static/GCWeb/js/theme.min.js"></script>
 
-<script src="/static/js/barchart.js"></script>
+<script src="../static/js/distribution-api-en.js"></script>
 </body>
+
 </html>
