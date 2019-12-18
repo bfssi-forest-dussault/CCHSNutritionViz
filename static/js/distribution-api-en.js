@@ -548,6 +548,4 @@ async function refreshData() {
 
 }
 
-
 $(document).ready(refreshData());
-

@@ -26,7 +26,7 @@ var svg = svgContainer
 // Global variable to track which region is currently being hovered over by user
 var hovered_region = null;
 
-d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
+d3.csv("../static/data/NutritionByRegion_Sept2019.csv", function (d) {
     return {
         nutrient: d['Nutrient/Item (unit)'],
         year: d['Year'],
@@ -137,7 +137,7 @@ d3.csv("/static/data/NutritionByRegion_June2019.csv", function (d) {
      */
 
     // Read in the map data
-    d3.json("/static/data/gpr_000b11a_e.json").then(function (json) {
+    d3.json("../static/data/gpr_000b11a_e.json").then(function (json) {
 
             // Setup dropdown menus
             yearDropdown.append("select")
