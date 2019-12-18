@@ -7,12 +7,12 @@ https://www12.statcan.gc.ca/census-recensement/2011/geo/bound-limit/bound-limit-
 */
 
 //Width and height
-const margin = {top: 0, right: 40, bottom: 0, left: 40};
+const margin = {top: 60, right: 40, bottom: 0, left: 40};
 const w = 580 - margin.left - margin.right;
 const h = 580 - margin.top - margin.bottom;
 
 const svgContainer = d3.select("#geochart");
-const boxplotTooltip = d3.select("body").append("div").attr("class", "boxplot-tooltip").style("display", "none");
+const colourRange = ['white','blue','orange'];
 
 const svg = svgContainer
     .append("svg")
@@ -74,9 +74,27 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
         // 'Zinc',
     ].sort();
 
+    // Stores appropriate chart title for each nutrient
+    const nutrientTitles = {
+        'Calcium': 'Percentage of adults age 19 and over with a usual intake of calcium below the Estimated Average Requirement, Canada, 2015',
+        'Folate': 'Percentage of adults age 19 and over with a usual intake of folate below the Estimated Average Requirement, Canada, 2015\n',
+        'Total dietary fibre': 'Percentage of adults age 19 and over with a usual intake of dietary fibre above the Adequate Intake, Canada, 2015\n',
+        'Iron': 'Percentage of adults age 19 and over with a usual intake of inadequate iron intake, Canada, 2015',
+        'Magnesium': 'Percentage of adults age 19 and over with a usual intake of magnesium below the Estimated Average Requirement, Canada, 2015',
+        'Percentage of total energy intake from carbohydrates': 'Percentage of adults age 19 and over with a usual intake of carbohydrate within the Acceptable Macronutrient Distribution Range, Canada, 2015',
+        'Percentage of total energy intake from fat': 'Percentage of adults age 19 and over with a usual intake of fat within the Acceptable Macronutrient Distribution Range, Canada, 2015',
+        // TODO: Is this a measure of ENERGY INTAKE from protein or PROTEIN? Not clear between nutrient and title
+        'Percentage of total energy intake from protein': 'Percentage of adults age 19 and over with a usual intake of protein within the Acceptable Macronutrient Distribution Range, Canada, 2015',
+        'Potassium': 'Percentage of adults age 19 and over with a usual intake of potassium above the Adequate Intake, Canada, 2015',
+        'Sodium': 'Percentage of adults age 19 and over with a usual intake of sodium above the Chronic Disease Risk Reduction intake, Canada, 2015',
+        'Vitamin A': 'Percentage of adults age 19 and over with a usual intake of vitamin A below the Estimated Average Requirement, Canada, 2015',
+        'Vitamin C': 'Percentage of adults age 19 and over with a usual intake of vitamin C below the Estimated Average Requirement, Canada, 2015',
+        'Vitamin D': 'Percentage of adults age 19 and over with a usual intake of vitamin D below the Estimated Average Requirement, Canada, 2015',
+        'Zinc': 'Percentage of adults age 19 and over with a usual intake of zinc below the Estimated Average Requirement, Canada, 2015'
+    };
+
     // Read in the map data
     d3.json("../static/data/gpr_000b11a_e.json").then(function (json) {
-
             // Setup dropdown menus
             sexDropdown.append("select")
                 .attr("class", "select form-control")
@@ -109,17 +127,24 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
             let nutrient = $("#nutrientDropdownSelector option:selected").text();
 
             data = master_data[sex][nutrient];
+            // const colorScale = d3.scaleLinear()
+            //     .range(["#f7f4f9", "#1371a7"]);
             const colorScale = d3.scaleLinear()
-                .range(["#f7f4f9", "#ce1256"]);
+                .domain([0, 50, 100])
+                .range(colourRange);
 
-            colorScale.domain([
-                d3.min(data, function (d) {
-                    return d.percentage;
-                }),
-                d3.max(data, function (d) {
-                    return d.percentage;
-                })
-            ]);
+            // colorScale.domain([
+            //     d3.min(data, function (d) {
+            //         return d.percentage;
+            //     }),
+            //     d3.max(data, function (d) {
+            //         return d.percentage;
+            //     })
+            // ]);
+            //
+
+            // Makes more sense since we're dealing with percentages I think.
+            colorScale.domain([0, 100]);
 
             for (let i = 0; i < data.length; i++) {
                 // Grab region name
@@ -169,6 +194,8 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                 .attr("y2", "100%")
                 .attr("spreadMethod", "pad");
 
+            const chartTitle = svg.append("g").attr("class", "chart-title");
+
             update_data();
 
             function update_data() {
@@ -176,6 +203,23 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                 let sex = $("#sexDropdownSelector option:selected").text();
                 let nutrient = $("#nutrientDropdownSelector option:selected").text();
                 data = master_data[sex][nutrient];
+
+                // Update title of chart
+                let chartTitleText = nutrientTitles[nutrient];
+
+                d3.select(".chart-title-text").remove();
+                chartTitle.append("text")
+                    .attr("class", "chart-title-text")
+                    .style("text-anchor", "middle")
+                    .style("font-weight", "bold")
+                    .attr("x", function (d) {
+                        return w / 2;
+                    })
+                    .attr("y", function (d) {
+                        return 0;
+                    })
+                    .text(chartTitleText)
+                    .call(wrap, w); // wrap the text in <= 30 pixels
 
                 // prepare driObject which will be used to draw info on the DRI/reference value
                 let driObject = {
@@ -195,8 +239,7 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                     driObject['range'] = true;
                 } else if (data[0]["ref_value"] !== null && data[0]["ref_value"] !== "") {
                     driObject['ref_value'] = Number(data[0]["ref_value"])
-                }
-                else {
+                } else {
                     driObject['ref_value_raw'] = 'N/A';
                 }
 
@@ -208,19 +251,19 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                 <div><strong>Prefix:</strong> ${driObject['prefix']}</div>
                 `);
 
-                // Cleanup the boxplot
-                d3.select("#boxplot").remove();
-                // d3.select("#linechart").remove();
-
                 // Reset color scale
-                colorScale.domain([
-                    d3.min(data, function (d) {
-                        return d.percentage;
-                    }),
-                    d3.max(data, function (d) {
-                        return d.percentage;
-                    })
-                ]);
+                // colorScale.domain([
+                //     d3.min(data, function (d) {
+                //         return d.percentage;
+                //     }),
+                //     d3.max(data, function (d) {
+                //         return d.percentage;
+                //     })
+                // ]);
+                // colorScale.domain([0, 100]);
+                colorScale
+                    .domain([0, 50, 100])
+                    .range(colourRange);
 
                 // Merge new data with geoJSON
                 for (let i = 0; i < data.length; i++) {
@@ -253,16 +296,18 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                 }
 
                 // Iterate through data to find min/max mean values for dataset
-                let meanValues = [];
-                Object.keys(data).forEach(
-                    function (key) {
-                        for (let i = 0; i < data.length; i++) {
-                            meanValues.push(data[key].percentage)
-                        }
-                    }
-                );
-                let maxValueY = d3.max(meanValues);
-                let minValueY = d3.min(meanValues);
+                // let meanValues = [];
+                // Object.keys(data).forEach(
+                //     function (key) {
+                //         for (let i = 0; i < data.length; i++) {
+                //             meanValues.push(data[key].percentage)
+                //         }
+                //     }
+                // );
+                // let maxValueY = d3.max(meanValues);
+                // let minValueY = d3.min(meanValues);
+                let maxValueY = 100;
+                let minValueY = 0;
 
                 // Texture settings for hovering over regions with textures.js
                 let texture = textures.lines().size(8).strokeWidth(2).background("white");
@@ -321,14 +366,48 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
             }
 
 
+            function wrap(text, width) {
+                // https://stackoverflow.com/questions/24784302/wrapping-text-in-d3
+                text.each(function () {
+                    var text = d3.select(this),
+                        words = text.text().split(/\s+/).reverse(),
+                        word,
+                        line = [],
+                        lineNumber = 0,
+                        lineHeight = 1.1, // ems
+                        x = text.attr("x"),
+                        y = text.attr("y"),
+                        dy = 0, //parseFloat(text.attr("dy")),
+                        tspan = text.text(null)
+                            .append("tspan")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("dy", dy + "em");
+                    while (word = words.pop()) {
+                        line.push(word);
+                        tspan.text(line.join(" "));
+                        if (tspan.node().getComputedTextLength() > width) {
+                            line.pop();
+                            tspan.text(line.join(" "));
+                            line = [word];
+                            tspan = text.append("tspan")
+                                .attr("x", x)
+                                .attr("y", y)
+                                .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                                .text(word);
+                        }
+                    }
+                });
+            }
+
             function draw_legend(minValueY, maxValueY, selectedNutrient, hoveredPercentage, referenceValue, driType) {
                 //Update legend (Derived from https://bl.ocks.org/duspviz-mit/9b6dce37101c30ab80d0bf378fe5e583)
                 key.selectAll("rect").remove();
                 key.select("#legend-label").remove();
 
                 // Adjust min and max values slightly so the legend looks nicer
-                maxValueY = maxValueY * 1.03;
-                minValueY = minValueY * 0.97;
+                // maxValueY = maxValueY * 1.03;
+                // minValueY = minValueY * 0.97;
 
                 legend.append("stop")
                     .attr("offset", "0%")
@@ -369,16 +448,8 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                         (h / 12 + 25) + ")")
                     .style("text-anchor", "middle")
                     .text(function () {
-                        return selectedNutrient
+                        return `${selectedNutrient} (%)`
                     });
-
-                // Draw a tick to represent the DRI reference value
-                // key.append("rect")
-                //     .attr("id", "legend-dri-reference-value")
-                //     .attr("x", x(referenceValue))
-                //     .attr("y", 0)
-                //     .attr("width", 2)
-                //     .attr("height", 20);
 
                 // Draw a tick on the legend with hoveredPercentage
                 if (hoveredPercentage === null) {
@@ -391,10 +462,7 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                         .attr("height", 20)
                 }
             }
-
         }
     );
-
-
 });
 
