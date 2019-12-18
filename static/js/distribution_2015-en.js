@@ -212,7 +212,6 @@ d3.csv("static/data/distributions-2015-sub20-en.csv").then(function (data) {
     // Setup area curve container
     let curves = svg.append("g").attr("class", "curves");
 
-
     // track whether or not to draw limit line
     let drawLimit = true;
 
