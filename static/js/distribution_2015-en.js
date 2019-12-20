@@ -1,6 +1,6 @@
 //Width and height
-const margin = {top: 60, right: 80, bottom: 60, left: 80};
-const w = 800 - margin.left - margin.right;
+const margin = {top: 120, right: 80, bottom: 60, left: 80};
+const w = 780 - margin.left - margin.right;
 const h = 480 - margin.top - margin.bottom;
 const chartFontSize = '14px';
 
@@ -177,8 +177,7 @@ d3.csv("static/data/distributions-2015-sub20-en.csv").then(function (data) {
         .style("text-anchor", "middle")
         .attr("font-family", "Helvetica,Arial,sans-serif")
         .style("font-weight", "bold")
-        .style("font-size", chartFontSize)
-        .text("");
+        .style("font-size", chartFontSize);
 
     // yAxis for density function values
     let yExtent = d3.extent(data, d => d.y);
@@ -206,6 +205,9 @@ d3.csv("static/data/distributions-2015-sub20-en.csv").then(function (data) {
         .style("font-weight", "bold")
         .style("font-size", chartFontSize)
         .text("Relative probability density");
+
+    // Chart title
+    const chartTitle = svg.append("g").attr("class", "chart-title");
 
     const colourScale = d3.scaleOrdinal().range(["#1371a7", "#e200c1"]);
 
@@ -419,6 +421,40 @@ d3.csv("static/data/distributions-2015-sub20-en.csv").then(function (data) {
         )
     }
 
+    function wrap(text, width) {
+        // https://stackoverflow.com/questions/24784302/wrapping-text-in-d3
+        text.each(function () {
+            var text = d3.select(this),
+                words = text.text().split(/\s+/).reverse(),
+                word,
+                line = [],
+                lineNumber = 0,
+                lineHeight = 1.1, // ems
+                x = text.attr("x"),
+                y = text.attr("y"),
+                dy = 0, //parseFloat(text.attr("dy")),
+                tspan = text.text(null)
+                    .append("tspan")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("dy", dy + "em");
+            while (word = words.pop()) {
+                line.push(word);
+                tspan.text(line.join(" "));
+                if (tspan.node().getComputedTextLength() > width) {
+                    line.pop();
+                    tspan.text(line.join(" "));
+                    line = [word];
+                    tspan = text.append("tspan")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                        .text(word);
+                }
+            }
+        });
+    }
+
     function draw_curves() {
         // Main method for drawing the curves, limit lines, and updating the axes
 
@@ -434,6 +470,24 @@ d3.csv("static/data/distributions-2015-sub20-en.csv").then(function (data) {
         referenceCode = data[0]['ref_code'];
         activeReferenceObject = retrieve_reference_values(referenceCode);
         update_render_tracker_adequacy(activeReferenceObject);
+
+        // Update title of chart
+        let chartTitleText = `${nutrient} usual intake distribution, ${sex}, ${age}, Canada, 2015`;
+
+        // Chart title
+        d3.select(".chart-title-text").remove();
+        chartTitle.append("text")
+            .attr("class", "chart-title-text")
+            .style("text-anchor", "middle")
+            .style("font-weight", "bold")
+            .attr("x", function (d) {
+                return w / 2;
+            })
+            .attr("y", function (d) {
+                return -60;
+            })
+            .text(chartTitleText)
+            .call(wrap, w); // wrap the text in <= 30 pixels
 
         // Update x-axis min and max values
         xExtent = d3.extent(data, d => d.x);
@@ -466,7 +520,7 @@ d3.csv("static/data/distributions-2015-sub20-en.csv").then(function (data) {
         // x-axis text
         svg.selectAll(".x-axis-text").remove();  // Remove old text
         svg.append("text")
-            .attr("transform", `translate(${w / 2},${h + margin.top - 20})`)
+            .attr("transform", `translate(${w / 2},${h + margin.bottom - 20})`)
             .attr("class", "x-axis-text")
             .style("text-anchor", "middle")
             .attr("font-family", "Helvetica,Arial,sans-serif")
@@ -566,7 +620,6 @@ d3.csv("static/data/distributions-2015-sub20-en.csv").then(function (data) {
         drawLimit = !!d3.select("#checkboxLimit").property("checked");
         draw_curves();
     }
-
 });
 
 // Hard-coded reference values for each Nutrient/Sex/Age group (each is assigned its own unique ref-code)

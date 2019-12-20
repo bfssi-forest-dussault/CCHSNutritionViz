@@ -148,39 +148,107 @@
 </header>
 <main role="main" property="mainContentOfPage" class="container">
     <div class="container-fluid">
-        <h1 property="name" id="wb-cont">CCHS Distribution Chart (2015) <small><strong>From <a href="#">Health
+        <h1 property="name" id="wb-cont">Usual intake distribution curves <small><strong>From <a href="#">Health
             Canada</a></strong></small>
         </h1>
 
         <div class="row">
-            <!--{# Main chart is populated here #}-->
-            <div id="distribution-chart" class="col-lg-4 col-lg-8 brdr-lft" style="overflow:visible"></div>
-        </div>
-        <div>
-            <form>
-                <input type="checkbox" id="checkboxLimit"> Display Limit Value(s)
-            </form>
-        </div>
+            <div class="col-lg-4">
 
-        <div class="container-fluid">
+                <div class="row">
+                    <section class="alert alert-info">
+                        <p>
+                            For more information on CCHS - Nutrition, please consult the
+                            <a href="https://www.canada.ca/en/health-canada/services/food-nutrition/food-nutrition-surveillance/health-nutrition-surveys/canadian-community-health-survey-cchs/reference-guide-understanding-using-data-2015.html">Reference
+                                Guide to Understanding and Using the Data</a> and the <a href="#">Statistical
+                            Methodology Guide</a>.
+                        </p>
+                    </section>
+                </div>
 
-            <!--{# Dropdown menus for filtering chart data #}-->
-            <fieldset>
-                <h3 class="h6 mrgn-tp-0 mrgn-rght-0 mrgn-bttm-sm">
+                <!--{# Dropdown menus for filtering chart data #}-->
+                <fieldset>
+                    <h3 class="h6 mrgn-tp-0 mrgn-rght-0 mrgn-bttm-sm">
                                 <span id="ContentPlaceHolder_Body_LabelStep1" class="text-danger">
                             Specify parameters below:
                         </span>
-                </h3>
-                <div class="form-group-sm">
-                    <label for="sexDropdown">Sex</label>
-                    <div id="sexDropdown" class="chart-selector"></div>
-                    <label for="nutrientDropdown">Nutrient</label>
-                    <div id="nutrientDropdown" class="chart-selector"></div>
-                    <label for="ageDropdown">Age Group</label>
-                    <div id="ageDropdown" class="chart-selector"></div>
+                    </h3>
+                    <div class="form-group-sm">
+                        <label for="sexDropdown">Sex</label>
+                        <div id="sexDropdown" class="chart-selector"></div>
+                        <label for="nutrientDropdown">Nutrient</label>
+                        <div id="nutrientDropdown" class="chart-selector"></div>
+                        <label for="ageDropdown">Age Group</label>
+                        <div id="ageDropdown" class="chart-selector"></div>
+                    </div>
+                </fieldset>
+                <div>
+                    <form>
+                        <input type="checkbox" id="checkboxLimit"> Display Limit Value(s)
+                    </form>
                 </div>
-            </fieldset>
 
+                <br>
+
+                <button class="btn btn-sm btn-success" id="saveChart"><span
+                        class="glyphicon glyphicon-cloud-download"></span> Save graph (.png)
+                </button>
+
+            </div>
+
+            <div class="col-lg-8">
+                <!--{# Main chart is populated here #}-->
+                <div id="distribution-chart" style="overflow:visible"></div>
+            </div>
+
+        </div>
+
+        <div class="row">
+            <div id="distribution-datatable">
+                <h4>Table</h4>
+                <table class="wb-tables table table-condensed table-hover cell-border" id="nutrientTable"
+                       data-wb-tables='{"scrollX" : true, "paging": false, "searching": false, "bInfo": false, "buttons": ["csv"]}'>
+                    <thead>
+                    <tr class="datatable-headers">
+                        <th>Nutrient</th>
+                        <th>Region</th>
+                    </tr>
+                    </thead>
+                    <tbody class="datatable-body">
+                    <tr>
+                        <td>n/a</td>
+                        <td>n/a</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <caption class="wb-inv"><i>* Notes about data go here.</i>
+                    <br>
+                    <br>
+                    <button class="btn btn-sm btn-success" id="nutrientTableDownload"><span
+                            class="glyphicon glyphicon-cloud-download"></span> Download table (.csv)
+                    </button>
+                </caption>
+            </div>
+        </div>
+
+        <br>
+
+        <div class="row">
+            <section class="alert alert-info barchart-legend">
+                <h3>Notes & Legend</h3>
+                <table class="table table-condensed table-responsive">
+                    <tbody>
+                    <tr>
+                        <td><strong>Data Source</strong></td>
+                        <td>Statistics Canada, Canadian Community Health Survey (CCHS) - Nutrition, 2015, Share
+                            Files.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+            </section>
         </div>
     </div>
 
@@ -228,7 +296,7 @@
 <script src="../static/wet-boew/js/jquery/2.1.4/jquery.js"></script>
 <script src="../static/wet-boew/js/wet-boew.min.js"></script>
 
-<!--{# d3 + datatables #}-->
+<!--{# d3 #}-->
 <script src="../static/js/d3.v5.min.js"></script>
 <script src="../static/js/textures.js"></script>
 <script src="../static/js/saveSvgAsPng.js"></script>

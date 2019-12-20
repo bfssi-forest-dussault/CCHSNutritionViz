@@ -6,13 +6,21 @@ https://www12.statcan.gc.ca/census-recensement/2011/geo/bound-limit/bound-limit-
 3. D3.js magiks
 */
 
-//Width and height
-const margin = {top: 60, right: 40, bottom: 0, left: 40};
+//Width and height of main map
+const margin = {top: 20, right: 40, bottom: 0, left: 40};
 const w = 580 - margin.left - margin.right;
 const h = 580 - margin.top - margin.bottom;
 
+// Width and height of region tooltip
+const marginRegion = {top: 20, right: 20, bottom: 20, left: 20};
+const wRegion = 220 - marginRegion.left - marginRegion.right;
+const hRegion = 220 - marginRegion.top - marginRegion.bottom;
+
 const svgContainer = d3.select("#geochart");
-const colourRange = ['white','blue','orange'];
+const svgContainerRegion = d3.select("#region-detail");
+
+// const colourRange = ['white','blue','orange'];
+const colourRange = ['#FDE725', '#238A8F', '#440154'];
 
 const svg = svgContainer
     .append("svg")
@@ -23,10 +31,99 @@ const svg = svgContainer
     .attr("transform",
         "translate(" + margin.left + "," + margin.top + ")");
 
-// Global variable to track which region is currently being hovered over by user
-let hovered_region = null;
+const svgRegion = svgContainerRegion
+    .append("svg")
+    .style("display", "block")
+    .attr("width", wRegion + marginRegion.left + marginRegion.right)
+    .attr("height", hRegion + marginRegion.top + marginRegion.bottom)
+    .append("g")
+    .attr("transform",
+        "translate(" + marginRegion.left + "," + marginRegion.top + ")");
 
-d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
+// Track which region is currently being hovered over over by user
+let hoveredRegion = null;
+
+// Note that regionList is used for keyboard controls of map; that's why territories are not included (no data)
+const regionList = [
+    'British Columbia',
+    'Alberta',
+    'Saskatchewan',
+    'Manitoba',
+    'Ontario',
+    'Quebec',
+    'Newfoundland and Labrador',
+    'New Brunswick',
+    'Prince Edward Island',
+    'Nova Scotia',
+];
+
+// Tracks index within the regionList to allow for keyboard/button cycling of map
+let currentRegionIndex = null;
+
+// Temporarily disabled nutrients with both sexes combined
+// TODO: When 'Male' or 'Female' is selected, limit the nutrient list to remove the following
+//  -- Folate
+//  -- Total dietary fibre
+//  -- Iron
+//  -- Zinc
+//  ... and show a disclaimer that says certain nutrients have been excluded because they are only available for
+//  the "Males and females combined" category.
+const nutrientList = [
+    'Calcium',
+    // 'Folate',
+    // 'Total dietary fibre',
+    // 'Iron',
+    'Magnesium',
+    'Percentage of total energy intake from carbohydrates',
+    'Percentage of total energy intake from fat',
+    'Percentage of total energy intake from protein',
+    'Potassium',
+    'Sodium',
+    'Vitamin A',
+    'Vitamin C',
+    'Vitamin D',
+    // 'Zinc',
+].sort();
+
+// Stores appropriate chart title for each nutrient
+const nutrientTitles = {
+    'Calcium': 'Percentage of adults age 19 and over with a usual intake of calcium below the Estimated Average Requirement, Canada, 2015',
+    'Folate': 'Percentage of adults age 19 and over with a usual intake of folate below the Estimated Average Requirement, Canada, 2015\n',
+    'Total dietary fibre': 'Percentage of adults age 19 and over with a usual intake of dietary fibre above the Adequate Intake, Canada, 2015\n',
+    'Iron': 'Percentage of adults age 19 and over with a usual intake of inadequate iron intake, Canada, 2015',
+    'Magnesium': 'Percentage of adults age 19 and over with a usual intake of magnesium below the Estimated Average Requirement, Canada, 2015',
+    'Percentage of total energy intake from carbohydrates': 'Percentage of adults age 19 and over with a usual intake of carbohydrate within the Acceptable Macronutrient Distribution Range, Canada, 2015',
+    'Percentage of total energy intake from fat': 'Percentage of adults age 19 and over with a usual intake of fat within the Acceptable Macronutrient Distribution Range, Canada, 2015',
+    'Percentage of total energy intake from protein': 'Percentage of adults age 19 and over with a usual intake of protein within the Acceptable Macronutrient Distribution Range, Canada, 2015',
+    'Potassium': 'Percentage of adults age 19 and over with a usual intake of potassium above the Adequate Intake, Canada, 2015',
+    'Sodium': 'Percentage of adults age 19 and over with a usual intake of sodium above the Chronic Disease Risk Reduction intake, Canada, 2015',
+    'Vitamin A': 'Percentage of adults age 19 and over with a usual intake of vitamin A below the Estimated Average Requirement, Canada, 2015',
+    'Vitamin C': 'Percentage of adults age 19 and over with a usual intake of vitamin C below the Estimated Average Requirement, Canada, 2015',
+    'Vitamin D': 'Percentage of adults age 19 and over with a usual intake of vitamin D below the Estimated Average Requirement, Canada, 2015',
+    'Zinc': 'Percentage of adults age 19 and over with a usual intake of zinc below the Estimated Average Requirement, Canada, 2015'
+};
+
+const nutrientFacts = {
+    'Calcium': `Click <a href="#">here</a> for more information on the Sodium intake of Canadians.`,
+    'Folate': '',
+    'Total dietary fibre': '',
+    'Iron': '',
+    'Magnesium': '',
+    'Percentage of total energy intake from carbohydrates': '',
+    'Percentage of total energy intake from fat': '',
+    'Percentage of total energy intake from protein': '',
+    'Potassium': '',
+    'Sodium': '',
+    'Vitamin A': '',
+    'Vitamin C': '',
+    'Vitamin D': `Estimates of the prevalence of inadequate intakes of vitamin D from food must be interpreted with caution. Vitamin D is unique as it can also be synthesized by the body from sunlight (UV radiation). In addition, vitamin D intake from supplements has not been considered in this assessment. While there appears to be a high prevalence of inadequate intakes of vitamin D from dietary sources, available clinical measures do not suggest wide-spread vitamin D deficiency in the Canadian population (<a href="https://www150.statcan.gc.ca/n1/pub/82-003-x/2010001/article/11131-eng.pdf">Langlois et al., Health Reports, 2010</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/21593503-the-vitamin-d-status-of-canadians-relative-to-the-2011-dietary-reference-intakes-an-examination-in-children-and-adults-with-and-without-supplement-use/">Whiting et al., Am J Clin Nutr. 2011)</a>. Vitamin D status in some sub-populations, however, may warrant further consideration.`,
+    'Zinc': ''
+};
+
+// Grab values from the main data object to populate options from the select dropdown
+const sexList = ['Female', 'Male', 'Males and females combined'];
+
+d3.csv("../static/data/geographic-dec2015-en.csv", function (d) {
     return {
         nutrient: d['Nutrient/Item'],
         region: d['Reg_Prov'],
@@ -40,7 +137,7 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
         ref_value: d['Ref value'],
     };
 }).then(function (data) {
-    let master_data = d3.nest()
+    let masterData = d3.nest()
         .key(function (d) {
             return d.sex
         })
@@ -52,46 +149,6 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
     // Dropdown menus
     let sexDropdown = d3.select("#sexDropdown");
     let nutrientDropdown = d3.select("#nutrientDropdown");
-
-    // Grab values from the main data object to populate options from the select dropdown
-    const sexList = ['Female', 'Male', 'Males and females combined'];
-
-    // Temporarily disabled nutrients with both sexes combined
-    const nutrientList = [
-        'Calcium',
-        // 'Folate',
-        // 'Total dietary fibre',
-        // 'Iron',
-        'Magnesium',
-        'Percentage of total energy intake from carbohydrates',
-        'Percentage of total energy intake from fat',
-        'Percentage of total energy intake from protein',
-        'Potassium',
-        'Sodium',
-        'Vitamin A',
-        'Vitamin C',
-        'Vitamin D',
-        // 'Zinc',
-    ].sort();
-
-    // Stores appropriate chart title for each nutrient
-    const nutrientTitles = {
-        'Calcium': 'Percentage of adults age 19 and over with a usual intake of calcium below the Estimated Average Requirement, Canada, 2015',
-        'Folate': 'Percentage of adults age 19 and over with a usual intake of folate below the Estimated Average Requirement, Canada, 2015\n',
-        'Total dietary fibre': 'Percentage of adults age 19 and over with a usual intake of dietary fibre above the Adequate Intake, Canada, 2015\n',
-        'Iron': 'Percentage of adults age 19 and over with a usual intake of inadequate iron intake, Canada, 2015',
-        'Magnesium': 'Percentage of adults age 19 and over with a usual intake of magnesium below the Estimated Average Requirement, Canada, 2015',
-        'Percentage of total energy intake from carbohydrates': 'Percentage of adults age 19 and over with a usual intake of carbohydrate within the Acceptable Macronutrient Distribution Range, Canada, 2015',
-        'Percentage of total energy intake from fat': 'Percentage of adults age 19 and over with a usual intake of fat within the Acceptable Macronutrient Distribution Range, Canada, 2015',
-        // TODO: Is this a measure of ENERGY INTAKE from protein or PROTEIN? Not clear between nutrient and title
-        'Percentage of total energy intake from protein': 'Percentage of adults age 19 and over with a usual intake of protein within the Acceptable Macronutrient Distribution Range, Canada, 2015',
-        'Potassium': 'Percentage of adults age 19 and over with a usual intake of potassium above the Adequate Intake, Canada, 2015',
-        'Sodium': 'Percentage of adults age 19 and over with a usual intake of sodium above the Chronic Disease Risk Reduction intake, Canada, 2015',
-        'Vitamin A': 'Percentage of adults age 19 and over with a usual intake of vitamin A below the Estimated Average Requirement, Canada, 2015',
-        'Vitamin C': 'Percentage of adults age 19 and over with a usual intake of vitamin C below the Estimated Average Requirement, Canada, 2015',
-        'Vitamin D': 'Percentage of adults age 19 and over with a usual intake of vitamin D below the Estimated Average Requirement, Canada, 2015',
-        'Zinc': 'Percentage of adults age 19 and over with a usual intake of zinc below the Estimated Average Requirement, Canada, 2015'
-    };
 
     // Read in the map data
     d3.json("../static/data/gpr_000b11a_e.json").then(function (json) {
@@ -108,6 +165,8 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                 .text(function (d) {
                     return d
                 });
+            $('select option:contains("combined")').prop('selected', true);
+
 
             nutrientDropdown.append("select")
                 .attr("class", "select form-control")
@@ -121,12 +180,14 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                 .text(function (d) {
                     return d
                 });
+            $('select option:contains("Sodium")').prop('selected', true);
+
 
             // Filter the data according to dropdown menu selections
             let sex = $("#sexDropdownSelector option:selected").text();
             let nutrient = $("#nutrientDropdownSelector option:selected").text();
 
-            data = master_data[sex][nutrient];
+            data = masterData[sex][nutrient];
             // const colorScale = d3.scaleLinear()
             //     .range(["#f7f4f9", "#1371a7"]);
             const colorScale = d3.scaleLinear()
@@ -202,10 +263,32 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                 // Reset data with new dropdown selections
                 let sex = $("#sexDropdownSelector option:selected").text();
                 let nutrient = $("#nutrientDropdownSelector option:selected").text();
-                data = master_data[sex][nutrient];
+                data = masterData[sex][nutrient];
 
                 // Update title of chart
                 let chartTitleText = nutrientTitles[nutrient];
+
+                // Update table
+                $(".datatable-body").empty();
+                data.forEach(function (d) {
+                    $(".datatable-body").append(`<tr role="row">
+                            <td>${d.nutrient}</td>
+                            <td>${d.region}</td>
+                            <td>${d.sex}</td>
+                            <td>${d.age}</td>
+                            <td>${d.n}</td>
+                            <td>${d.percentage}</td>
+                            <td>${d.percentage_se}</td>
+                            <td>${d.dri_type}</td>
+                            <td>${d.ref_value}</td>
+                         </tr>`)
+                });
+
+                // Update nutrient facts disclaimer
+                d3.select('#nutrient-notes').html(`
+<!--                <p><strong>Notes</strong></p>-->
+                <p>${nutrientFacts[nutrient]}</p>
+                `);
 
                 d3.select(".chart-title-text").remove();
                 chartTitle.append("text")
@@ -233,6 +316,7 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                 };
 
                 // Logic to parse the reference value which might be null, a number, or a number range
+                // TODO: Probably don't need this logic anymore, maybe remove
                 if (data[0]['ref_value'].includes("-")) {
                     driObject['ref_min'] = Number(data[0]['ref_value'].split(' - ')[0]);
                     driObject['ref_max'] = Number(data[0]['ref_value'].split(' - ')[1]);
@@ -243,24 +327,6 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                     driObject['ref_value_raw'] = 'N/A';
                 }
 
-                console.log(driObject);
-                d3.select("#tooltip-text").html(`
-                
-                <div><strong>Reference value:</strong> ${driObject['ref_value_raw']}</div>
-                <div><strong>DRI Type:</strong> ${driObject['dri_type']}</div>
-                <div><strong>Prefix:</strong> ${driObject['prefix']}</div>
-                `);
-
-                // Reset color scale
-                // colorScale.domain([
-                //     d3.min(data, function (d) {
-                //         return d.percentage;
-                //     }),
-                //     d3.max(data, function (d) {
-                //         return d.percentage;
-                //     })
-                // ]);
-                // colorScale.domain([0, 100]);
                 colorScale
                     .domain([0, 50, 100])
                     .range(colourRange);
@@ -295,26 +361,12 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                     }
                 }
 
-                // Iterate through data to find min/max mean values for dataset
-                // let meanValues = [];
-                // Object.keys(data).forEach(
-                //     function (key) {
-                //         for (let i = 0; i < data.length; i++) {
-                //             meanValues.push(data[key].percentage)
-                //         }
-                //     }
-                // );
-                // let maxValueY = d3.max(meanValues);
-                // let minValueY = d3.min(meanValues);
                 let maxValueY = 100;
                 let minValueY = 0;
 
-                // Texture settings for hovering over regions with textures.js
-                let texture = textures.lines().size(8).strokeWidth(2).background("white");
-                svg.call(texture);
-
                 // Cleanup
                 svg.selectAll(".regions").remove();
+                svgRegion.selectAll(".region-tooltip").remove();
 
                 // Draw map
                 svg.append("g").attr("class", "regions")
@@ -333,38 +385,114 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                         }
                     })
                     .on("mouseover", function (d) {
-                        // Apply texture to region
+                        // Grab the region and store it the global variable
+                        hoveredRegion = d.properties.region;
+
+                        // Draw the legend
+                        if (!regionList.includes(hoveredRegion)) {
+                            d3.select("#legend-tick").remove();  // Remove legend tick for territories
+                            return  // Break out of mouse handling if there's no data for region
+                        } else {
+                            draw_legend(minValueY, maxValueY, nutrient, d.properties.percentage, driObject);
+                        }
+
+                        // Texture settings for hovering over regions with textures.js
+                        let texture = textures.lines()
+                            .size(8)
+                            .strokeWidth(2)
+                            .background(colorScale(d.properties.percentage));
+                        svg.call(texture);
                         d3.select(this).style("fill", texture.url());
 
-                        // Grab the region and store it the global variable
-                        hovered_region = d.properties.region;
-
-                        if (d.properties.PRENAME === "Nunavut" ||
-                            d.properties.PRENAME === "Yukon" ||
-                            d.properties.PRENAME === "Northwest Territories") {
-                            // d3.select("#linechart").remove();
-                            d3.select("#legend-tick").remove();  // Remove legend tick
-                        } else {
-                            // line_chart(d.properties.PRENAME, maxValueY, d.properties.nutrient);
-                            // box_plot(d.properties.PRENAME, d.properties.nutrient);
-                            draw_legend(minValueY, maxValueY, nutrient, d.properties.percentage);
+                        // Register the hovered region as the current index. Skip this for territories.
+                        if (regionList.includes(hoveredRegion)) {
+                            currentRegionIndex = regionList.findIndex(x => x === hoveredRegion);
+                            // console.log(`region=${hoveredRegion}, index=${currentRegionIndex}`);
                         }
+
+                        // Update the tooltip with hovered map region/DRI info
+                        tooltip_hover(d, driObject);
+
                     })
                     .on("mouseout", function (d) {
+                        svgRegion.select(".region-tooltip").remove(); // remove hovered region tooltip
+                        d3.select("#region-detail-text").html('<i>Hover your cursor over a region on the map for additional detail.</i>'); // remove hovered region tooltip
+                        d3.select("#legend-tick").remove();  // Remove legend tick
+
                         // Set territories by default to original grey
                         if (typeof d.properties.percentage === "undefined") {
                             d3.select(this).style("fill", "#ccc");
                         }
                         // Restore original colors to regions
                         else {
-                            d3.select(this).style("fill", colorScale(d.properties.percentage));
+                            d3.selectAll(".region-borders").style("fill", function (d) {
+                                if (d.properties.percentage) {
+                                    return colorScale(d.properties.percentage);
+                                } else {
+                                    return "#ccc";
+                                }
+                            })
                         }
                     });
 
                 // Draw the legend - pass null into hovered percentage
-                draw_legend(minValueY, maxValueY, nutrient, null);
+                draw_legend(minValueY, maxValueY, nutrient, null, driObject);
             }
 
+            function zoomed() {
+                d3.select('.region-tooltip').style("stroke-width", 1.5 / d3.event.transform.k + "px");
+                d3.select('.region-tooltip').attr("transform", d3.event.transform); // updated for d3 v4
+            }
+
+            function tooltip_hover(d, driObject) {
+                // Zoom
+                let zoom = d3.zoom().on("zoom", zoomed);
+                let activeRegion = d.properties.PRENAME;
+
+                // Set text
+                d3.select("#region-detail-text").html(`
+<div class="col-lg-4 col-md-4 col-sm-4"><strong>Region: </strong> ${activeRegion}</div>
+<div class="col-lg-8 col-md-8 col-sm-8"><strong>% ${driObject['prefix']} ${driObject['dri_type']}: </strong> ${d.properties.percentage} (±${d.properties.percentage_se})
+</div>
+                `);
+
+                //Draw hovered region in detail tooltip
+                let bounds = path.bounds(d),
+                    dx = bounds[1][0] - bounds[0][0],
+                    dy = bounds[1][1] - bounds[0][1],
+                    x = (bounds[0][0] + bounds[1][0]) / 2,
+                    y = (bounds[0][1] + bounds[1][1]) / 2,
+                    scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / wRegion, dy / hRegion))),
+                    translate = [wRegion / 2 - scale * x, hRegion / 2 - scale * y];
+
+                svgRegion.append("g").attr("class", "region-tooltip")
+                    .selectAll("path")
+                    .data(json.features)
+                    .enter()
+                    .append("path")
+                    .attr("d", path)
+                    .attr("class", "region-borders")
+                    .style('pointer-events', 'all')  // required to enable mouseover and mouseout on svg
+                    .style("fill", function (d) {
+                        if (d.properties.percentage && d.properties.PRENAME === activeRegion) {
+                            return colorScale(d.properties.percentage);
+                        } else if (d.properties.PRENAME === activeRegion) {
+                            return 'grey';
+                        } else {
+                            return "transparent";
+                        }
+                    })
+                    .style("stroke-width", 0)
+                    .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)); // updated for d3 v4
+            }
+
+            function previousRegion() {
+
+            }
+
+            function nextRegion() {
+
+            }
 
             function wrap(text, width) {
                 // https://stackoverflow.com/questions/24784302/wrapping-text-in-d3
@@ -400,7 +528,8 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                 });
             }
 
-            function draw_legend(minValueY, maxValueY, selectedNutrient, hoveredPercentage, referenceValue, driType) {
+
+            function draw_legend(minValueY, maxValueY, selectedNutrient, hoveredPercentage, driObject) {
                 //Update legend (Derived from https://bl.ocks.org/duspviz-mit/9b6dce37101c30ab80d0bf378fe5e583)
                 key.selectAll("rect").remove();
                 key.select("#legend-label").remove();
@@ -448,7 +577,7 @@ d3.csv("../static/data/geographic-dec2015-bi.csv", function (d) {
                         (h / 12 + 25) + ")")
                     .style("text-anchor", "middle")
                     .text(function () {
-                        return `${selectedNutrient} (%)`
+                        return `Percentage ${driObject.prefix.toLowerCase()} ${driObject.dri_type}`
                     });
 
                 // Draw a tick on the legend with hoveredPercentage
