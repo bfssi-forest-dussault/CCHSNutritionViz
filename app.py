@@ -37,6 +37,11 @@ def distribution_chart_2015():
     return render_template('cchs_nutrition_distribution_2015-en.html', title='CCHS Nutrition - Distribution (2015)')
 
 
+@app.route('/table')
+def distribution_chart_2015():
+    return render_template('cchs_nutrition_table-en.html', title='CCHS Nutrition - Table (2015)')
+
+
 @app.route('/distribution-api')
 def distribution_chart_api():
     return render_template('cchs_nutrition_distribution_api-en.html',
